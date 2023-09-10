@@ -313,7 +313,7 @@ fn compile_uint64<T, H: Hash>(
 #[derive(Debug)]
 pub struct Engine<T, H: Hash> {
     operations: Vec<(usize, Operation<H>)>,
-    pub heaps: Heaps,
+    heaps: Heaps,
     fields: HashMap<String, (usize, ChertField<T>)>,
 }
 
