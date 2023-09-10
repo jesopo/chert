@@ -368,7 +368,10 @@ impl<T> Engine<T> {
                     self.heaps.boolean[*index] =
                         self.heaps.string[*left] == self.heaps.string[*right]
                 }
-                Operation::NegativeUint64(_child) => self.heaps.int64[*index] = -1,
+                Operation::NegativeUint64(child) => {
+                    // will happily overflow. perhaps we should emit warnings about this stuff at compiletime
+                    self.heaps.int64[*index] = -(self.heaps.uint64[*child] as i64)
+                }
                 Operation::NotBool(child) => {
                     self.heaps.boolean[*index] = !self.heaps.boolean[*child]
                 }
