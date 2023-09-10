@@ -49,6 +49,10 @@ pub enum NodeBooleanEquals<T> {
         left: NodeInt64<T>,
         right: NodeInt64<T>,
     },
+    IpIp {
+        left: NodeIp<T>,
+        right: NodeIp<T>,
+    },
 }
 
 #[derive(Debug)]

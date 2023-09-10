@@ -36,6 +36,7 @@ pub enum Operation {
     EqualsStringString { left: usize, right: usize },
     EqualsUint64Uint64 { left: usize, right: usize },
     EqualsInt64Int64 { left: usize, right: usize },
+    EqualsIpIP { left: usize, right: usize },
     NegativeUint64(usize),
     NotBool(usize),
     SubtractUint64Uint64 { left: usize, right: usize },
@@ -173,6 +174,14 @@ fn compile_boolean<T>(
                 heaps.boolean.push(false);
                 let index = heaps.boolean.len() - 1;
                 operations.push((index, Operation::EqualsUint64Uint64 { left, right }));
+                index
+            }
+            NodeBooleanEquals::IpIp { left, right } => {
+                let left = compile_ip(left, fields, heaps);
+                let right = compile_ip(right, fields, heaps);
+                heaps.boolean.push(false);
+                let index = heaps.boolean.len() - 1;
+                operations.push((index, Operation::EqualsIpIP { left, right }));
                 index
             }
         },
@@ -374,6 +383,9 @@ impl<T> Engine<T> {
                 }
                 Operation::NotBool(child) => {
                     self.heaps.boolean[*index] = !self.heaps.boolean[*child]
+                }
+                Operation::EqualsIpIP { left, right } => {
+                    self.heaps.boolean[*index] = self.heaps.ip[*left] == self.heaps.ip[*right]
                 }
             };
         }

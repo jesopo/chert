@@ -139,6 +139,15 @@ impl BinaryOperator {
                         right,
                     }))
                 }
+                (Node::Ip(left), Node::Ip(right)) => {
+                    Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::IpIp { left, right }))
+                }
+                (Node::String(left), Node::String(right)) => {
+                    Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::StringString {
+                        left,
+                        right,
+                    }))
+                }
                 (left, right) => {
                     return Err((left, right));
                 }
