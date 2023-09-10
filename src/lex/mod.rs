@@ -54,9 +54,9 @@ pub enum Token {
     Duration(u64),
     #[regex("[a-z][a-zA-Z0-9_]*", |lex| lex.slice().to_owned())]
     Identifier(String),
-    #[regex(r"(\d{1,3}\.){3}\d{1,3}|[0-9a-f:]+", |lex| IpAddr::from_str(lex.slice()), priority=2)]
+    #[regex(r"(\d{1,3}\.){3}\d{1,3}|:?[0-9a-f]+:[0-9a-f:]+", |lex| IpAddr::from_str(lex.slice()))]
     Ip(IpAddr),
-    #[regex(r"(\d{1,3}\.){3}\d{1,3}/\d{1,2}|[0-9a-f:]+/\d{1,3}", |lex| IpCidr::from_str(lex.slice()), priority=2)]
+    #[regex(r"(\d{1,3}\.){3}\d{1,3}/\d{1,2}|:?[0-9a-f]+:[0-9a-f:]+/\d{1,3}", |lex| IpCidr::from_str(lex.slice()))]
     Cidr(IpCidr),
     #[regex(r"(\d+)?\.?\d+", |lex| lex.slice().to_owned())]
     Number(String),
