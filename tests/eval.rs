@@ -13,13 +13,13 @@ fn test_1() {
         Ok(tokens) => {
             let node = chert::parse::parse::<Foo>(tokens).unwrap();
             if let Node::Boolean(node) = node {
-                let mut engine = chert::compile::compile::<Foo>(Vec::from([node]));
+                let mut engine = chert::compile::compile(Vec::from([(0, node)]));
                 engine.load_variables(&Foo {
                     a: 2,
                     b: "meow".to_owned(),
                 });
-                engine.eval();
-                assert!(engine.heaps.boolean[engine.results[0]]);
+                let matched = engine.eval();
+                assert_eq!(matched, Vec::from([&0]));
             }
         }
         Err(e) => unreachable!("{e:?}"),

@@ -13,6 +13,7 @@ use chert_accessor::{ChertField, ChertStruct};
 use cidr::{IpCidr, Ipv4Cidr};
 use regex::Regex;
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::net::{IpAddr, Ipv4Addr};
 
 #[derive(Debug, Default)]
@@ -27,7 +28,7 @@ pub struct Heaps {
 }
 
 #[derive(Debug)]
-pub enum Operation {
+pub enum Operation<H: Hash> {
     AddStringString { left: usize, right: usize },
     AddUint64Uint64 { left: usize, right: usize },
     BothBoolBool { left: usize, right: usize },
@@ -42,6 +43,7 @@ pub enum Operation {
     SubtractUint64Uint64 { left: usize, right: usize },
     WithinIpCidr { left: usize, right: usize },
     MatchesStringRegex { left: usize, right: usize },
+    RaiseOutput { boolean: usize, id: H },
 }
 
 fn compile_ip<T>(
@@ -86,11 +88,11 @@ fn compile_cidr<T>(
     }
 }
 
-fn compile_boolean<T>(
+fn compile_boolean<T, H: Hash>(
     node: NodeBoolean<T>,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     heaps: &mut Heaps,
-    operations: &mut Vec<(usize, Operation)>,
+    operations: &mut Vec<(usize, Operation<H>)>,
 ) -> usize {
     match node {
         NodeBoolean::Constant(value) => {
@@ -198,11 +200,11 @@ fn compile_boolean<T>(
     }
 }
 
-fn compile_string<T>(
+fn compile_string<T, H: Hash>(
     node: NodeString<T>,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     heaps: &mut Heaps,
-    operations: &mut Vec<(usize, Operation)>,
+    operations: &mut Vec<(usize, Operation<H>)>,
 ) -> usize {
     match node {
         NodeString::_Phantom(_) => unreachable!(),
@@ -230,11 +232,11 @@ fn compile_string<T>(
     }
 }
 
-fn compile_int64<T>(
+fn compile_int64<T, H: Hash>(
     node: NodeInt64<T>,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     heaps: &mut Heaps,
-    operations: &mut Vec<(usize, Operation)>,
+    operations: &mut Vec<(usize, Operation<H>)>,
 ) -> usize {
     match node {
         NodeInt64::Variable { name } => {
@@ -266,11 +268,11 @@ fn compile_regex<T>(node: NodeRegex<T>, heaps: &mut Heaps) -> usize {
     }
 }
 
-fn compile_uint64<T>(
+fn compile_uint64<T, H: Hash>(
     node: NodeUint64<T>,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     heaps: &mut Heaps,
-    operations: &mut Vec<(usize, Operation)>,
+    operations: &mut Vec<(usize, Operation<H>)>,
 ) -> usize {
     match node {
         NodeUint64::_Phantom(_) => unreachable!(),
@@ -309,15 +311,13 @@ fn compile_uint64<T>(
 }
 
 #[derive(Debug)]
-pub struct Engine<T> {
-    operations: Vec<(usize, Operation)>,
+pub struct Engine<T, H: Hash> {
+    operations: Vec<(usize, Operation<H>)>,
     pub heaps: Heaps,
     fields: HashMap<String, (usize, ChertField<T>)>,
-    pub results: Vec<usize>,
-    _phantom: Option<T>,
 }
 
-impl<T> Engine<T> {
+impl<T, H: Hash> Engine<T, H> {
     pub fn load_variables(&mut self, variables: &T) {
         for (_, (index, field)) in self.fields.iter() {
             match field {
@@ -333,66 +333,77 @@ impl<T> Engine<T> {
         }
     }
 
-    pub fn eval(&mut self) {
+    pub fn eval(&mut self) -> Vec<&H> {
+        let mut matched = Vec::new();
         for (index, operation) in &self.operations {
             match operation {
                 Operation::AddUint64Uint64 { left, right } => {
-                    self.heaps.uint64[*index] = self.heaps.uint64[*left] + self.heaps.uint64[*right]
+                    self.heaps.uint64[*index] =
+                        self.heaps.uint64[*left] + self.heaps.uint64[*right];
                 }
                 Operation::SubtractUint64Uint64 { left, right } => {
-                    self.heaps.uint64[*index] = self.heaps.uint64[*left] - self.heaps.uint64[*right]
+                    self.heaps.uint64[*index] =
+                        self.heaps.uint64[*left] - self.heaps.uint64[*right];
                 }
                 Operation::EqualsUint64Uint64 { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.uint64[*left] == self.heaps.uint64[*right]
+                        self.heaps.uint64[*left] == self.heaps.uint64[*right];
                 }
                 Operation::EqualsInt64Int64 { left, right } => {
-                    self.heaps.boolean[*index] = self.heaps.int64[*left] == self.heaps.int64[*right]
+                    self.heaps.boolean[*index] =
+                        self.heaps.int64[*left] == self.heaps.int64[*right];
                 }
                 Operation::WithinIpCidr { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.cidr[*left].contains(&self.heaps.ip[*right])
+                        self.heaps.cidr[*left].contains(&self.heaps.ip[*right]);
                 }
                 Operation::MatchesStringRegex { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.regex[*right].is_match(&self.heaps.string[*left])
+                        self.heaps.regex[*right].is_match(&self.heaps.string[*left]);
                 }
                 Operation::AddStringString { left, right } => {
                     self.heaps.string[*index] =
-                        self.heaps.string[*left].to_string() + &self.heaps.string[*right]
+                        self.heaps.string[*left].to_string() + &self.heaps.string[*right];
                 }
                 Operation::BothBoolBool { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.boolean[*left] && self.heaps.boolean[*right]
+                        self.heaps.boolean[*left] && self.heaps.boolean[*right];
                 }
                 Operation::EitherBoolBool { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.boolean[*left] || self.heaps.boolean[*right]
+                        self.heaps.boolean[*left] || self.heaps.boolean[*right];
                 }
                 Operation::EqualsBoolBool { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.boolean[*left] == self.heaps.boolean[*right]
+                        self.heaps.boolean[*left] == self.heaps.boolean[*right];
                 }
                 Operation::EqualsStringString { left, right } => {
                     self.heaps.boolean[*index] =
-                        self.heaps.string[*left] == self.heaps.string[*right]
+                        self.heaps.string[*left] == self.heaps.string[*right];
                 }
                 Operation::NegativeUint64(child) => {
                     // will happily overflow. perhaps we should emit warnings about this stuff at compiletime
-                    self.heaps.int64[*index] = -(self.heaps.uint64[*child] as i64)
+                    self.heaps.int64[*index] = -(self.heaps.uint64[*child] as i64);
                 }
                 Operation::NotBool(child) => {
-                    self.heaps.boolean[*index] = !self.heaps.boolean[*child]
+                    self.heaps.boolean[*index] = !self.heaps.boolean[*child];
                 }
                 Operation::EqualsIpIP { left, right } => {
-                    self.heaps.boolean[*index] = self.heaps.ip[*left] == self.heaps.ip[*right]
+                    self.heaps.boolean[*index] = self.heaps.ip[*left] == self.heaps.ip[*right];
+                }
+                Operation::RaiseOutput { boolean, id } => {
+                    if self.heaps.boolean[*boolean] {
+                        matched.push(id);
+                    }
                 }
             };
         }
+
+        matched
     }
 }
 
-pub fn compile<T: ChertStruct>(expressions: Vec<NodeBoolean<T>>) -> Engine<T> {
+pub fn compile<T: ChertStruct, H: Hash>(expressions: Vec<(H, NodeBoolean<T>)>) -> Engine<T, H> {
     let fields = T::fields();
     let mut heaps = Heaps::default();
 
@@ -410,17 +421,26 @@ pub fn compile<T: ChertStruct>(expressions: Vec<NodeBoolean<T>>) -> Engine<T> {
     }
 
     let mut operations = Vec::new();
-    let mut results = Vec::new();
-    for node in expressions {
-        compile_boolean(node, &fields, &mut heaps, &mut operations);
-        results.push(heaps.boolean.len() - 1);
+    for (id, expression) in expressions {
+        compile_boolean(expression, &fields, &mut heaps, &mut operations);
+        operations.push((
+            0,
+            Operation::RaiseOutput {
+                boolean: heaps.boolean.len() - 1,
+                id,
+            },
+        ));
     }
 
     Engine {
         operations,
         heaps,
-        results,
         fields,
-        _phantom: Option::<T>::None,
+    }
+}
+
+impl<T: ChertStruct, H: Hash> FromIterator<(H, NodeBoolean<T>)> for Engine<T, H> {
+    fn from_iter<I: IntoIterator<Item = (H, NodeBoolean<T>)>>(iter: I) -> Self {
+        compile(iter.into_iter().collect())
     }
 }

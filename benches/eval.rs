@@ -21,11 +21,15 @@ fn criterion_benchmark(c: &mut Criterion) {
         chert::parse::nodes::Node::Boolean(node) => node,
         _ => unreachable!(),
     };
-    let mut engine = chert::compile::compile::<Foo0>(Vec::from([node]));
+    let mut engine = chert::compile::compile(Vec::from([(0, node)]));
     let variables = Foo0 { a: 2 };
     engine.load_variables(&variables);
 
-    c.bench_function("basic-chert", |b| b.iter(|| engine.eval()));
+    c.bench_function("basic-chert", |b| {
+        b.iter(|| {
+            engine.eval();
+        })
+    });
     c.bench_function("basic-rust", |b| {
         b.iter(|| black_box(&variables.a) + black_box(1) == black_box(3))
     });
@@ -36,7 +40,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         chert::parse::nodes::Node::Boolean(node) => node,
         _ => unreachable!(),
     };
-    let mut engine = chert::compile::compile::<Foo1>(Vec::from([node]));
+    let mut engine = chert::compile::compile(Vec::from([(0, node)]));
     let variables = Foo1 {
         a: IpAddr::V4(Ipv4Addr::from(16843009)),
     };
@@ -44,7 +48,11 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let rust_cidr = IpCidr::V4(Ipv4Cidr::new(16843008.into(), 24).unwrap());
 
-    c.bench_function("basic-chert", |b| b.iter(|| engine.eval()));
+    c.bench_function("basic-chert", |b| {
+        b.iter(|| {
+            engine.eval();
+        })
+    });
     c.bench_function("basic-rust", |b| {
         b.iter(|| rust_cidr.contains(black_box(&variables.a)))
     });
