@@ -216,7 +216,8 @@ pub enum Associativity {
 impl Operator {
     pub fn associativity(&self) -> Associativity {
         match self {
-            Self::Unary(_) | Self::Scope(_) => Associativity::Right,
+            Self::Unary(_) => Associativity::Right,
+            Self::Scope(_) => Associativity::Left,
             Self::Binary(operator) => match operator {
                 BinaryOperator::Exponent => Associativity::Right,
                 _ => Associativity::Left,
@@ -228,13 +229,12 @@ impl Operator {
         match self {
             Self::Scope(_) => 0,
             Self::Binary(operator) => match operator {
-                BinaryOperator::Matches | BinaryOperator::Within => 2,
-                BinaryOperator::Equals => 3,
-                BinaryOperator::Either => 4,
-                BinaryOperator::Both => 5,
-                BinaryOperator::Add | BinaryOperator::Subtract => 6,
-                BinaryOperator::Multiply | BinaryOperator::Divide | BinaryOperator::Modulo => 7,
-                BinaryOperator::Exponent => 8,
+                BinaryOperator::Either => 2,
+                BinaryOperator::Both => 3,
+                BinaryOperator::Equals | BinaryOperator::Matches | BinaryOperator::Within => 4,
+                BinaryOperator::Add | BinaryOperator::Subtract => 5,
+                BinaryOperator::Multiply | BinaryOperator::Divide | BinaryOperator::Modulo => 6,
+                BinaryOperator::Exponent => 7,
             },
             Self::Unary(_) => 255,
         }
