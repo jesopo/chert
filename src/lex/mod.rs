@@ -52,7 +52,7 @@ pub enum Token {
     ParenthesisClose,
     #[regex(r"(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?", util::parse_duration)]
     Duration(u64),
-    #[regex("[a-z][a-zA-Z0-9]*", |lex| lex.slice().to_owned())]
+    #[regex("[a-z][a-zA-Z0-9_]*", |lex| lex.slice().to_owned())]
     Identifier(String),
     #[regex(r"(\d{1,3}\.){3}\d{1,3}|[0-9a-f:]+", |lex| IpAddr::from_str(lex.slice()), priority=2)]
     Ip(IpAddr),
