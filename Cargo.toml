@@ -1,0 +1,21 @@
+[package]
+name = "chert"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cidr = "0.2.2"
+logos = "0.13.0"
+regex = "1.9.3"
+chert_accessor = { path = "./chert_accessor" }
+chert_derive = { path = "./chert_derive" }
+
+[dev-dependencies]
+criterion = "0.4.0"
+
+[[bench]]
+name = "eval"
+harness = false
+
+[profile.bench]
+debug = true

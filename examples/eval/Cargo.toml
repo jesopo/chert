@@ -1,0 +1,13 @@
+[package]
+name = "eval"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.3.0", features = ["derive"] }
+chert = { path = "../../" }
+chert_derive = { path = "../../chert_derive" }
+chert_accessor = { path = "../../chert_accessor" }
+cidr = "0.2.1"
