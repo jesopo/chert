@@ -14,7 +14,9 @@ struct Foo1 {
     ip: IpAddr,
 }
 
-fn criterion_benchmark(c: &mut Criterion) {
+fn criterion_1(c: &mut Criterion) {
+    let mut group = c.benchmark_group("$i + 1 == 3");
+
     let tokens = chert::lex::lex("i + 1 == 3").unwrap();
     let ast = chert::parse::parse::<Foo0>(tokens).unwrap();
     let node = match ast {
@@ -24,12 +26,14 @@ fn criterion_benchmark(c: &mut Criterion) {
     let engine = chert::compile::compile(Vec::from([(0, node)]));
     let variables = Foo0 { i: 2 };
 
-    let mut group = c.benchmark_group("$i + 1 == 3");
     group.bench_function("chert", |b| b.iter(|| engine.eval(&variables)));
     group.bench_function("rust", |b| {
         b.iter(|| black_box(&variables.i) + black_box(1) == black_box(3))
     });
-    group.finish();
+}
+
+fn criterion_2(c: &mut Criterion) {
+    let mut group = c.benchmark_group("$ip in 1.1.1.0/24");
 
     let tokens = chert::lex::lex("ip in 1.1.1.0/24").unwrap();
     let ast = chert::parse::parse::<Foo1>(tokens).unwrap();
@@ -44,13 +48,11 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let rust_cidr = IpCidr::V4(Ipv4Cidr::new(16843008.into(), 24).unwrap());
 
-    let mut group = c.benchmark_group("$ip in 1.1.1.0/24");
     group.bench_function("chert", |b| b.iter(|| engine.eval(&variables)));
     group.bench_function("rust", |b| {
         b.iter(|| rust_cidr.contains(black_box(&variables.ip)))
     });
-    group.finish();
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!(benches, criterion_1, criterion_2);
 criterion_main!(benches);
