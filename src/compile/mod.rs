@@ -507,7 +507,7 @@ pub fn compile<T: ChertStruct + Clone, H: Hash>(
     for (id, expression) in expressions {
         let mut dynamics = initial_dynamics.clone();
         compile_boolean(
-            expression.clone(),
+            expression,
             &fields,
             &mut constants,
             &mut dynamics,

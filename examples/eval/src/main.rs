@@ -8,7 +8,7 @@ struct Arguments {
     expression: String,
 }
 
-#[derive(Debug, ChertStruct)]
+#[derive(Clone, Debug, ChertStruct)]
 struct Variables {}
 
 fn main() {
