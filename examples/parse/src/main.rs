@@ -11,7 +11,7 @@ struct Arguments {
 
 #[derive(Debug, ChertStruct)]
 struct Variables {
-    a: u32,
+    a: u64,
     b: IpCidr,
 }
 

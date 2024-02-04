@@ -1,4 +1,3 @@
-use chert::parse::nodes::Node;
 use chert_derive::ChertStruct;
 use clap::Parser;
 
@@ -17,12 +16,11 @@ fn main() {
 
     let tokens = chert::lex::lex(&args.expression).unwrap();
     let node = chert::parse::parse::<Variables>(tokens).unwrap();
-    if let Node::Boolean(node) = node {
+    if let chert::parse::nodes::Node::Boolean(node) = node {
         println!("{node:?}");
-        let mut engine = chert::compile::compile(Vec::from([node]));
-        engine.load_variables(&Variables {});
-        engine.eval();
-        println!("{:?}", engine.heaps.boolean[engine.results[0]]);
+        let engine = chert::compile::compile(Vec::from([(0, node)]));
+        let results = engine.eval(&Variables {});
+        println!("{results:?}");
     } else {
         panic!("expression must result in a boolean");
     }

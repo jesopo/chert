@@ -4,17 +4,23 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cidr = "0.2.2"
+cidr = { version = "0.2.2", features = ["serde"] }
 logos = "0.13.0"
 regex = "1.9.3"
 chert_accessor = { path = "./chert_accessor" }
 chert_derive = { path = "./chert_derive" }
+serde = { version = "1.0.196", features = ["derive"] }
+serde_regex = "1.1.0"
 
 [dev-dependencies]
 criterion = "0.4.0"
 
 [[bench]]
-name = "eval"
+name = "eval_compare_native"
+harness = false
+
+[[bench]]
+name = "eval_flamegraphable"
 harness = false
 
 [profile.bench]
