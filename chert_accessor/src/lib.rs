@@ -47,7 +47,7 @@ impl<T> From<Box<dyn Fn(&T) -> &IpCidr>> for ChertField<T> {
     }
 }
 
-pub trait ChertStruct: Sized + std::fmt::Debug {
+pub trait ChertStructTrait: Sized + std::fmt::Debug {
     fn fields() -> HashMap<String, (usize, ChertField<Self>)>;
 }
 

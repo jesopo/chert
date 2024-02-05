@@ -10,7 +10,7 @@ fn to_chert_field(ident: &Ident, ty: &Type) -> TokenStream2 {
 
     if let Type::Path(type_path) = ty {
         quote! {
-            (#ident_str, <chert_accessor::ChertField::<Self> as From<Box<dyn Fn(&Self) -> &#type_path>>>::from(Box::new(|o| &o.#ident)))
+            (#ident_str, <chert::ChertField::<Self> as From<Box<dyn Fn(&Self) -> &#type_path>>>::from(Box::new(|o| &o.#ident)))
         }
     } else {
         unreachable!();
@@ -36,10 +36,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
     };
 
     quote! {
-        impl chert_accessor::ChertStruct for #ident {
-            fn fields() -> std::collections::HashMap<String, (usize, chert_accessor::ChertField<Self>)> {
+        impl chert::ChertStructTrait for #ident {
+            fn fields() -> std::collections::HashMap<String, (usize, chert::ChertField<Self>)> {
                 use std::collections::HashMap;
-                use chert_accessor::ChertField;
+                use chert::ChertField;
 
                 let mut field_counts: HashMap<u8, usize> = HashMap::new();
                 let mut indexed_fields: HashMap<String, (usize, ChertField<Self>)> = HashMap::new();

@@ -1,6 +1,6 @@
 [package]
 name = "chert_derive"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 description = "domain-specific expression language"
@@ -13,7 +13,6 @@ readme = "README.md"
 proc-macro = true
 
 [dependencies]
-chert_accessor = { version = "0.1.0", path = "../chert_accessor" }
 quote = "1.0.28"
 syn = { version = "2.0.18", features = ["extra-traits", "test"] }
 proc-macro2 = "1.0.60"

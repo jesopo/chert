@@ -11,9 +11,8 @@ use self::nodes::uint64::NodeUint64;
 use self::nodes::Node;
 use self::operators::{Associativity, BinaryOperator, Operator, ScopeOperator, UnaryOperator};
 use crate::lex::Token;
+use crate::{ChertField, ChertStructTrait};
 use std::ops::Range;
-
-use chert_accessor::{ChertField, ChertStruct};
 
 pub enum Keyword<T> {
     Operand(Node<T>),
@@ -101,7 +100,7 @@ fn pop_ops<T: std::fmt::Debug>(
     Ok(())
 }
 
-pub fn parse<T: ChertStruct>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node<T>, Error<T>> {
+pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node<T>, Error<T>> {
     let fields = T::fields();
 
     let mut operands = Vec::new();

@@ -8,8 +8,8 @@ use crate::parse::nodes::ip::NodeIp;
 use crate::parse::nodes::regex::NodeRegex;
 use crate::parse::nodes::string::{NodeString, NodeStringAdd};
 use crate::parse::nodes::uint64::{NodeUint64, NodeUint64Add, NodeUint64Subtract};
+use crate::{ChertField, ChertStructTrait};
 
-use chert_accessor::{ChertField, ChertStruct};
 use cidr::{IpCidr, Ipv4Cidr};
 use regex::Regex;
 use std::collections::HashMap;
@@ -482,7 +482,7 @@ impl<T, H: Hash> Engine<T, H> {
     }
 }
 
-pub fn compile<T: ChertStruct + Clone, H: Hash>(
+pub fn compile<T: ChertStructTrait + Clone, H: Hash>(
     expressions: Vec<(H, NodeBoolean<T>)>,
 ) -> Engine<T, H> {
     let fields = T::fields();
