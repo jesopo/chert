@@ -531,31 +531,24 @@ pub fn compile<T: ChertStruct + Clone, H: Hash>(
         } = dynamics;
         //TODO: this sucks, do better than this
         if boolean.len() > max_size_dynamics.boolean.len() {
-            //println!("1 {expression:#?}");
             max_size_dynamics.boolean = boolean;
         }
         if cidr.len() > max_size_dynamics.boolean.len() {
-            //println!("2 {expression:#?}");
             max_size_dynamics.cidr = cidr;
         }
         if int64.len() > max_size_dynamics.int64.len() {
-            //println!("3 {expression:#?}");
             max_size_dynamics.int64 = int64;
         }
         if ip.len() > max_size_dynamics.ip.len() {
-            //println!("4 {expression:#?}");
             max_size_dynamics.ip = ip;
         }
         if string.len() > max_size_dynamics.string.len() {
-            //println!("5 {expression:#?}");
             max_size_dynamics.string = string;
         }
         if uint64.len() > max_size_dynamics.uint64.len() {
-            //println!("6 {expression:#?}");
             max_size_dynamics.uint64 = uint64;
         }
         if regex.len() > max_size_dynamics.regex.len() {
-            //println!("7 {expression:#?}");
             max_size_dynamics.regex = regex;
         }
     }
