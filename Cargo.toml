@@ -10,8 +10,8 @@ repository = "https://github.com/jesopo/chert"
 readme = "README.md"
 
 [dependencies]
-chert_accessor = { version = "0.1.0", path = "./chert_accessor" }
-chert_derive = { version = "0.1.0", path = "./chert_derive" }
+chert_accessor = { version = "0.2.0", path = "./chert_accessor" }
+chert_derive = { version = "0.2.0", path = "./chert_derive" }
 cidr = { version = "0.2.2", features = ["serde"] }
 logos = "0.13.0"
 regex = "1.9.3"
