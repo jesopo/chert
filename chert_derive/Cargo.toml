@@ -2,6 +2,12 @@
 name = "chert_derive"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "domain-specific expression language"
+homepage = "https://github.com/jesopo/chert"
+documentation = "https://github.com/jesopo/chert"
+repository = "https://github.com/jesopo/chert"
+readme = "README.md"
 
 [lib]
 proc-macro = true
