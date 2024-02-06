@@ -1,41 +1,58 @@
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, TokenStream as TokenStream2};
+use proc_macro2::Ident;
 use quote::quote;
 use syn::{
-    parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named, FieldsNamed, Type,
+    parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named, FieldsNamed,
 };
-
-fn to_chert_field(ident: &Ident, ty: &Type) -> TokenStream2 {
-    let ident_str = ident.to_string();
-
-    if let Type::Path(type_path) = ty {
-        quote! {
-            (#ident_str, <chert::ChertField::<Self> as From<Box<dyn Fn(&Self) -> &#type_path>>>::from(Box::new(|o| &o.#ident)))
-        }
-    } else {
-        unreachable!();
-    }
-}
 
 #[proc_macro_derive(ChertStruct)]
 pub fn derive(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input as DeriveInput);
 
-    let fields = if let Struct(DataStruct {
+    let Struct(DataStruct {
         fields: Named(FieldsNamed { ref named, .. }),
         ..
-    }) = data
-    {
-        named
-            .iter()
-            .filter_map(|f| f.ident.as_ref().map(|i| (i, &f.ty)))
-            .map(|(i, t)| to_chert_field(i, t))
-            .collect::<Vec<_>>()
-    } else {
+    }) = data else {
         panic!("must be a struct with named fields");
     };
 
+    let module_name = Ident::new(&format!("{}_chert_accessors", ident), ident.span());
+
+    let mut fields = Vec::new();
+    let mut accessor_functions = Vec::new();
+
+    for (i, t) in named
+            .iter()
+            .filter_map(|f| f.ident.as_ref().map(|i| (i, &f.ty)))
+    {
+        let accessor_name = Ident::new(
+            &format!("get_{}", i.to_string().to_ascii_lowercase()),
+            i.span(),
+        );
+
+        let ident_str = i.to_string();
+
+        fields.push(quote! {
+            (#ident_str, <chert::ChertField::<Self> as From<fn(&#ident) -> &#t>>::from(#module_name::#accessor_name))
+        });
+
+        accessor_functions.push(quote! {
+            #[allow(non_snake_case)]
+            pub(super) fn #accessor_name(object: &#ident) -> &#t {
+                &object.#i
+            }
+        });
+    }
+
     quote! {
+        #[allow(non_snake_case)]
+        mod #module_name {
+            // Blanket import needed so that type names can be resolved the same way
+            // they are in the original struct definition
+            use super::*;
+            #(#accessor_functions)*
+        }
+
         impl chert::ChertStructTrait for #ident {
             fn fields() -> std::collections::HashMap<String, (usize, chert::ChertField<Self>)> {
                 use std::collections::HashMap;

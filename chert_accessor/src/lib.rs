@@ -3,46 +3,46 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 
 pub enum ChertField<T> {
-    Boolean(Box<dyn Fn(&T) -> &bool>),
-    Cidr(Box<dyn Fn(&T) -> &IpCidr>),
-    Int64(Box<dyn Fn(&T) -> &i64>),
-    Ip(Box<dyn Fn(&T) -> &IpAddr>),
-    String(Box<dyn Fn(&T) -> &String>),
-    Uint64(Box<dyn Fn(&T) -> &u64>),
+    Boolean(fn(&T) -> &bool),
+    Cidr(fn(&T) -> &IpCidr),
+    Int64(fn(&T) -> &i64),
+    Ip(fn(&T) -> &IpAddr),
+    String(fn(&T) -> &String),
+    Uint64(fn(&T) -> &u64),
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &String>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &String>) -> Self {
+impl<T> From<fn(&T) -> &String> for ChertField<T> {
+    fn from(field: fn(&T) -> &String) -> Self {
         Self::String(field)
     }
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &u64>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &u64>) -> Self {
+impl<T> From<fn(&T) -> &u64> for ChertField<T> {
+    fn from(field: fn(&T) -> &u64) -> Self {
         Self::Uint64(field)
     }
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &i64>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &i64>) -> Self {
+impl<T> From<fn(&T) -> &i64> for ChertField<T> {
+    fn from(field: fn(&T) -> &i64) -> Self {
         Self::Int64(field)
     }
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &bool>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &bool>) -> Self {
+impl<T> From<fn(&T) -> &bool> for ChertField<T> {
+    fn from(field: fn(&T) -> &bool) -> Self {
         Self::Boolean(field)
     }
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &IpAddr>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &IpAddr>) -> Self {
+impl<T> From<fn(&T) -> &IpAddr> for ChertField<T> {
+    fn from(field: fn(&T) -> &IpAddr) -> Self {
         Self::Ip(field)
     }
 }
 
-impl<T> From<Box<dyn Fn(&T) -> &IpCidr>> for ChertField<T> {
-    fn from(field: Box<dyn Fn(&T) -> &IpCidr>) -> Self {
+impl<T> From<fn(&T) -> &IpCidr> for ChertField<T> {
+    fn from(field: fn(&T) -> &IpCidr) -> Self {
         Self::Cidr(field)
     }
 }

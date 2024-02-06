@@ -9,7 +9,9 @@ struct Arguments {
 }
 
 #[derive(Clone, Debug, ChertStruct)]
-struct Variables {}
+struct Variables {
+    _a: i64,
+}
 
 fn main() {
     let args = Arguments::parse();
@@ -19,7 +21,7 @@ fn main() {
     if let chert::parse::nodes::Node::Boolean(node) = node {
         println!("{node:?}");
         let engine = chert::compile::compile(Vec::from([(0, node)]));
-        let results = engine.eval(&Variables {});
+        let results = engine.eval(&Variables { _a: 0 });
         println!("{results:?}");
     } else {
         panic!("expression must result in a boolean");
