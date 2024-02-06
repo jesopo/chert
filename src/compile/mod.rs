@@ -483,7 +483,7 @@ impl<T, H: Hash> Engine<T, H> {
 }
 
 pub fn compile<T: ChertStructTrait + Clone, H: Hash>(
-    expressions: Vec<(H, NodeBoolean<T>)>,
+    expressions: impl IntoIterator<Item = (H, NodeBoolean<T>)>,
 ) -> Engine<T, H> {
     let fields = T::fields();
     let mut constants = Scratch::new();
