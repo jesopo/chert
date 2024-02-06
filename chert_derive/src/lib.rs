@@ -1,9 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::quote;
-use syn::{
-    parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named, FieldsNamed,
-};
+use syn::{parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named, FieldsNamed};
 
 #[proc_macro_derive(ChertStruct)]
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -12,7 +10,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let Struct(DataStruct {
         fields: Named(FieldsNamed { ref named, .. }),
         ..
-    }) = data else {
+    }) = data
+    else {
         panic!("must be a struct with named fields");
     };
 
@@ -22,8 +21,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let mut accessor_functions = Vec::new();
 
     for (i, t) in named
-            .iter()
-            .filter_map(|f| f.ident.as_ref().map(|i| (i, &f.ty)))
+        .iter()
+        .filter_map(|f| f.ident.as_ref().map(|i| (i, &f.ty)))
     {
         let accessor_name = Ident::new(
             &format!("get_{}", i.to_string().to_ascii_lowercase()),
