@@ -207,11 +207,15 @@ fn parse_inner<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Resul
 
 #[derive(Debug)]
 pub struct Ast<T, R> {
-    pub root: R,
+    pub(crate) root: R,
     _type: Option<T>,
 }
 
 impl<T, R> Ast<T, R> {
+    pub fn get_root(&self) -> &R {
+        &self.root
+    }
+
     pub(crate) unsafe fn new(root: R) -> Ast<T, R> {
         Ast { root, _type: None }
     }
