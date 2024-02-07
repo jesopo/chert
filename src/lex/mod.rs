@@ -64,7 +64,7 @@ pub enum Token {
     Operator(String),
     #[regex(r"m[^\w\s]", |lex| util::compile_regex(lex))]
     Regex(Regex),
-    #[regex("[ ]+", |lex| lex.slice().to_owned())]
+    #[regex(r"[ \n]+", |lex| lex.slice().to_owned())]
     Space(String),
     #[regex("'|\"", util::find_closing)]
     String(String),
