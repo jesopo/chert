@@ -494,7 +494,7 @@ impl<T, H: Hash> Engine<T, H> {
     }
 }
 
-pub fn compile<T: ChertStructTrait + Clone, H: Hash>(
+pub fn compile<T: ChertStructTrait, H: Hash>(
     expressions: impl IntoIterator<Item = (H, NodeBoolean<T>)>,
 ) -> Engine<T, H> {
     let fields = T::fields();
