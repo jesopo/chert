@@ -41,13 +41,13 @@ impl Scratch {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Pointer {
     Constant(usize),
     Dynamic(usize),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Operation<H: Hash> {
     AddStringString { left: Pointer, right: Pointer },
     AddUint64Uint64 { left: Pointer, right: Pointer },
@@ -340,7 +340,7 @@ fn compile_uint64<T, H: Hash>(
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Engine<T, H: Hash> {
     operations: Vec<(usize, Operation<H>)>,
     constants: Scratch,

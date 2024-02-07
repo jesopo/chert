@@ -9,6 +9,7 @@ pub trait ChertFieldType {
     fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T>;
 }
 
+#[derive(Clone)]
 pub enum ChertField<T> {
     Boolean(fn(&T) -> &bool),
     Cidr(fn(&T) -> &IpCidr),
