@@ -1,15 +1,16 @@
-#[derive(Debug)]
-pub enum NodeStringAdd<T> {
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeStringAdd {
     StringString {
-        left: Box<NodeString<T>>,
-        right: Box<NodeString<T>>,
+        left: Box<NodeString>,
+        right: Box<NodeString>,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeString<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeString {
     Variable { name: String },
     Constant(String),
-    Add(NodeStringAdd<T>),
-    _Phantom(T),
+    Add(NodeStringAdd),
 }

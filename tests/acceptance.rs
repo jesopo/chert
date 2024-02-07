@@ -1,5 +1,3 @@
-use chert::parse::nodes::Node;
-
 fn cidr(s: &'static str) -> cidr::IpCidr {
     use std::str::FromStr as _;
     cidr::IpCidr::from_str(s).unwrap()
@@ -18,8 +16,8 @@ fn test_boolean() {
     struct Variables {
         a: bool,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("a && true") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("a && true") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(engine.eval(&Variables { a: true }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: false }), &[&0; 0]);
     } else {
@@ -33,8 +31,8 @@ fn test_cidr() {
     struct Variables {
         a: cidr::IpCidr,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("1.1.1.1 in a") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("1.1.1.1 in a") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(
             engine.eval(&Variables {
                 a: cidr("1.1.1.0/24")
@@ -58,8 +56,8 @@ fn test_int64() {
     struct Variables {
         a: i64,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("a == -1") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("a == -1") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(engine.eval(&Variables { a: -1 }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: -2 }), &[&0; 0]);
     } else {
@@ -73,8 +71,8 @@ fn test_ip() {
     struct Variables {
         a: std::net::IpAddr,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("a == 1.1.1.1") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("a == 1.1.1.1") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(engine.eval(&Variables { a: ip("1.1.1.1") }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: ip("1.1.1.2") }), &[&0; 0]);
     } else {
@@ -88,8 +86,8 @@ fn test_string() {
     struct Variables {
         a: String,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("a == 'foo'") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("a == 'foo'") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(
             engine.eval(&Variables {
                 a: String::from("foo")
@@ -113,8 +111,8 @@ fn test_uint64() {
     struct Variables {
         a: u64,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("a == 1") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("a == 1") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(engine.eval(&Variables { a: 1 }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: 2 }), &[&0; 0]);
     } else {
@@ -128,8 +126,8 @@ fn test_regex() {
     struct Variables {
         a: regex::Regex,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse("'foo' ~ a") {
-        let engine = chert::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse("'foo' ~ a") {
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(engine.eval(&Variables { a: re("f..") }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: re("b..") }), &[&0; 0]);
     } else {
@@ -149,7 +147,7 @@ fn test_all_types() {
         f: u64,
         g: regex::Regex,
     }
-    if let Ok(Node::Boolean(node)) = chert::parse(
+    if let Ok(ast) = chert::parse(
         &Vec::from([
             "a == true",
             "1.1.1.1 in b",
@@ -161,7 +159,7 @@ fn test_all_types() {
         ])
         .join(" and "),
     ) {
-        let engine = chert::compile(Vec::from([(0, node)]));
+        let engine = chert::compile(Vec::from([(0, ast)]));
         assert_eq!(
             engine.eval(&Variables {
                 a: true,

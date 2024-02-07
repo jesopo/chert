@@ -15,12 +15,12 @@ use self::string::NodeString;
 use self::uint64::NodeUint64;
 
 #[derive(Debug)]
-pub enum Node<T> {
-    Boolean(NodeBoolean<T>),
-    Cidr(NodeCidr<T>),
-    Int64(NodeInt64<T>),
-    Ip(NodeIp<T>),
-    Regex(NodeRegex<T>),
-    String(NodeString<T>),
-    Uint64(NodeUint64<T>),
+pub enum Node {
+    Boolean(NodeBoolean),
+    Cidr(NodeCidr),
+    Int64(NodeInt64),
+    Ip(NodeIp),
+    Regex(NodeRegex),
+    String(NodeString),
+    Uint64(NodeUint64),
 }

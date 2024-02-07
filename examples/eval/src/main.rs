@@ -16,11 +16,9 @@ struct Variables {
 fn main() {
     let args = Arguments::parse();
 
-    let tokens = chert::lex::lex(&args.expression).unwrap();
-    let node = chert::parse::parse::<Variables>(tokens).unwrap();
-    if let chert::parse::nodes::Node::Boolean(node) = node {
-        println!("{node:?}");
-        let engine = chert::compile::compile(Vec::from([(0, node)]));
+    if let Ok(ast) = chert::parse(&args.expression) {
+        println!("{ast:?}");
+        let engine = chert::compile::compile(Vec::from([(0, ast)]));
         let results = engine.eval(&Variables { _a: 0 });
         println!("{results:?}");
     } else {

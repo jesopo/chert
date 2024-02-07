@@ -20,6 +20,7 @@ serde_regex = "1.1.0"
 
 [dev-dependencies]
 criterion = "0.4.0"
+serde_json = "1.0"
 
 [[bench]]
 name = "eval_compare_native"

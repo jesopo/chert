@@ -1,8 +1,11 @@
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-pub enum NodeRegex<T> {
-    Variable { name: String },
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeRegex {
+    Variable {
+        name: String,
+    },
+    #[serde(with = "serde_regex")]
     Constant(Regex),
-    _Phantom(T),
 }

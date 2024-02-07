@@ -4,27 +4,16 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use chert_derive::ChertStruct;
 
-#[derive(ChertStruct, Clone, Debug)]
-struct Foo0 {
-    i: u64,
-}
-
-#[derive(ChertStruct, Clone, Debug)]
-struct Foo1 {
-    ip: IpAddr,
-}
-
 fn criterion_1(c: &mut Criterion) {
     let mut group = c.benchmark_group("$i + 1 == 3");
+    #[derive(ChertStruct, Debug)]
+    struct Variables {
+        i: u64,
+    }
 
-    let tokens = chert::lex::lex("i + 1 == 3").unwrap();
-    let ast = chert::parse::parse::<Foo0>(tokens).unwrap();
-    let node = match ast {
-        chert::parse::nodes::Node::Boolean(node) => node,
-        _ => unreachable!(),
-    };
-    let engine = chert::compile::compile(Vec::from([(0, node)]));
-    let variables = Foo0 { i: 2 };
+    let ast = chert::parse("i + 1 == 3").unwrap();
+    let engine = chert::compile::compile(Vec::from([(0, ast)]));
+    let variables = Variables { i: 2 };
 
     group.bench_function("chert", |b| b.iter(|| engine.eval(&variables)));
     group.bench_function("rust", |b| {
@@ -34,15 +23,14 @@ fn criterion_1(c: &mut Criterion) {
 
 fn criterion_2(c: &mut Criterion) {
     let mut group = c.benchmark_group("$ip in 1.1.1.0/24");
+    #[derive(ChertStruct, Debug)]
+    struct Variables {
+        ip: IpAddr,
+    }
 
-    let tokens = chert::lex::lex("ip in 1.1.1.0/24").unwrap();
-    let ast = chert::parse::parse::<Foo1>(tokens).unwrap();
-    let node = match ast {
-        chert::parse::nodes::Node::Boolean(node) => node,
-        _ => unreachable!(),
-    };
-    let engine = chert::compile::compile(Vec::from([(0, node)]));
-    let variables = Foo1 {
+    let ast = chert::parse("ip in 1.1.1.0/24").unwrap();
+    let engine = chert::compile::compile(Vec::from([(0, ast)]));
+    let variables = Variables {
         ip: IpAddr::V4(Ipv4Addr::from(16843009)),
     };
 

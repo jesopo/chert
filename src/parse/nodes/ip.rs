@@ -1,8 +1,9 @@
 use std::net::IpAddr;
 
-#[derive(Debug)]
-pub enum NodeIp<T> {
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeIp {
     Variable { name: String },
     Constant(IpAddr),
-    _Phantom(T),
 }

@@ -1,24 +1,25 @@
-#[derive(Debug)]
-pub enum NodeUint64Add<T> {
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeUint64Add {
     Uint64Uint64 {
-        left: Box<NodeUint64<T>>,
-        right: Box<NodeUint64<T>>,
+        left: Box<NodeUint64>,
+        right: Box<NodeUint64>,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeUint64Subtract<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeUint64Subtract {
     Uint64Uint64 {
-        left: Box<NodeUint64<T>>,
-        right: Box<NodeUint64<T>>,
+        left: Box<NodeUint64>,
+        right: Box<NodeUint64>,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeUint64<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeUint64 {
     Variable { name: String },
     Constant(u64),
-    Add(NodeUint64Add<T>),
-    Subtract(NodeUint64Subtract<T>),
-    _Phantom(T),
+    Add(NodeUint64Add),
+    Subtract(NodeUint64Subtract),
 }

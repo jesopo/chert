@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::cidr::NodeCidr;
 use super::int64::NodeInt64;
 use super::ip::NodeIp;
@@ -5,72 +7,69 @@ use super::regex::NodeRegex;
 use super::string::NodeString;
 use super::uint64::NodeUint64;
 
-#[derive(Debug)]
-pub enum NodeBooleanWithin<T> {
-    IpCidr { left: NodeIp<T>, right: NodeCidr<T> },
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanWithin {
+    IpCidr { left: NodeIp, right: NodeCidr },
 }
 
-#[derive(Debug)]
-pub enum NodeBooleanNot<T> {
-    Boolean(Box<NodeBoolean<T>>),
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanNot {
+    Boolean(Box<NodeBoolean>),
 }
 
-#[derive(Debug)]
-pub enum NodeBooleanBoth<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanBoth {
     BooleanBoolean {
-        left: Box<NodeBoolean<T>>,
-        right: Box<NodeBoolean<T>>,
+        left: Box<NodeBoolean>,
+        right: Box<NodeBoolean>,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeBooleanEither<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanEither {
     BooleanBoolean {
-        left: Box<NodeBoolean<T>>,
-        right: Box<NodeBoolean<T>>,
+        left: Box<NodeBoolean>,
+        right: Box<NodeBoolean>,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeBooleanEquals<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanEquals {
     BooleanBoolean {
-        left: Box<NodeBoolean<T>>,
-        right: Box<NodeBoolean<T>>,
+        left: Box<NodeBoolean>,
+        right: Box<NodeBoolean>,
     },
     StringString {
-        left: NodeString<T>,
-        right: NodeString<T>,
+        left: NodeString,
+        right: NodeString,
     },
     Uint64Uint64 {
-        left: NodeUint64<T>,
-        right: NodeUint64<T>,
+        left: NodeUint64,
+        right: NodeUint64,
     },
     Int64Int64 {
-        left: NodeInt64<T>,
-        right: NodeInt64<T>,
+        left: NodeInt64,
+        right: NodeInt64,
     },
     IpIp {
-        left: NodeIp<T>,
-        right: NodeIp<T>,
+        left: NodeIp,
+        right: NodeIp,
     },
 }
 
-#[derive(Debug)]
-pub enum NodeBooleanMatches<T> {
-    StringRegex {
-        left: NodeString<T>,
-        right: NodeRegex<T>,
-    },
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBooleanMatches {
+    StringRegex { left: NodeString, right: NodeRegex },
 }
 
-#[derive(Debug)]
-pub enum NodeBoolean<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeBoolean {
     Variable { name: String },
     Constant(bool),
-    Not(NodeBooleanNot<T>),
-    Both(NodeBooleanBoth<T>),
-    Either(NodeBooleanEither<T>),
-    Within(NodeBooleanWithin<T>),
-    Equals(NodeBooleanEquals<T>),
-    Matches(NodeBooleanMatches<T>),
+    Not(NodeBooleanNot),
+    Both(NodeBooleanBoth),
+    Either(NodeBooleanEither),
+    Within(NodeBooleanWithin),
+    Equals(NodeBooleanEquals),
+    Matches(NodeBooleanMatches),
 }

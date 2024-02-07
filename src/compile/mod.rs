@@ -8,7 +8,7 @@ use crate::parse::nodes::ip::NodeIp;
 use crate::parse::nodes::regex::NodeRegex;
 use crate::parse::nodes::string::{NodeString, NodeStringAdd};
 use crate::parse::nodes::uint64::{NodeUint64, NodeUint64Add, NodeUint64Subtract};
-use crate::{ChertField, ChertStructTrait};
+use crate::{Ast, ChertField, ChertStructTrait};
 
 use cidr::{IpCidr, Ipv4Cidr};
 use regex::Regex;
@@ -67,12 +67,11 @@ pub enum Operation<H: Hash> {
 }
 
 fn compile_ip<T>(
-    node: NodeIp<T>,
+    node: NodeIp,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
-        NodeIp::_Phantom(_) => unreachable!(),
         NodeIp::Constant(value) => {
             constants.ip.push(value);
             Pointer::Constant(constants.ip.len() - 1)
@@ -88,12 +87,11 @@ fn compile_ip<T>(
 }
 
 fn compile_cidr<T>(
-    node: NodeCidr<T>,
+    node: NodeCidr,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
-        NodeCidr::_Phantom(_) => unreachable!(),
         NodeCidr::Constant(value) => {
             constants.cidr.push(value);
             Pointer::Constant(constants.cidr.len() - 1)
@@ -109,7 +107,7 @@ fn compile_cidr<T>(
 }
 
 fn compile_boolean<T, H: Hash>(
-    node: NodeBoolean<T>,
+    node: NodeBoolean,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -222,14 +220,13 @@ fn compile_boolean<T, H: Hash>(
 }
 
 fn compile_string<T, H: Hash>(
-    node: NodeString<T>,
+    node: NodeString,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Operation<H>)>,
 ) -> Pointer {
     match node {
-        NodeString::_Phantom(_) => unreachable!(),
         NodeString::Constant(value) => {
             constants.string.push(value);
             Pointer::Constant(constants.string.len() - 1)
@@ -255,7 +252,7 @@ fn compile_string<T, H: Hash>(
 }
 
 fn compile_int64<T, H: Hash>(
-    node: NodeInt64<T>,
+    node: NodeInt64,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -282,12 +279,11 @@ fn compile_int64<T, H: Hash>(
 }
 
 fn compile_regex<T>(
-    node: NodeRegex<T>,
+    node: NodeRegex,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
-        NodeRegex::_Phantom(_) => unreachable!(),
         NodeRegex::Variable { name } => {
             if let Some((index, ChertField::Regex(_))) = fields.get(&name) {
                 Pointer::Dynamic(*index)
@@ -303,14 +299,13 @@ fn compile_regex<T>(
 }
 
 fn compile_uint64<T, H: Hash>(
-    node: NodeUint64<T>,
+    node: NodeUint64,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Operation<H>)>,
 ) -> Pointer {
     match node {
-        NodeUint64::_Phantom(_) => unreachable!(),
         NodeUint64::Constant(value) => {
             constants.uint64.push(value);
             Pointer::Constant(constants.uint64.len() - 1)
@@ -496,8 +491,17 @@ impl<T, H: Hash> Engine<T, H> {
     }
 }
 
+pub unsafe fn compile_unsafe<T: ChertStructTrait, H: Hash>(
+    expressions: impl IntoIterator<Item = (H, NodeBoolean)>,
+) -> Engine<T, H> {
+    let expressions = expressions
+        .into_iter()
+        .map(|(id, root)| (id, Ast::<T, _>::new(root)));
+    compile(expressions)
+}
+
 pub fn compile<T: ChertStructTrait, H: Hash>(
-    expressions: impl IntoIterator<Item = (H, NodeBoolean<T>)>,
+    expressions: impl IntoIterator<Item = (H, Ast<T, NodeBoolean>)>,
 ) -> Engine<T, H> {
     let fields = T::fields();
     let mut constants = Scratch::new();
@@ -522,7 +526,7 @@ pub fn compile<T: ChertStructTrait, H: Hash>(
     for (id, expression) in expressions {
         let mut dynamics = initial_dynamics.clone();
         compile_boolean(
-            expression,
+            expression.root,
             &fields,
             &mut constants,
             &mut dynamics,

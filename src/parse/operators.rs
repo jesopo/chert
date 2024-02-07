@@ -49,7 +49,7 @@ pub enum Error {
 }
 
 impl UnaryOperator {
-    pub fn parse(token: &str) -> Option<Self> {
+    pub(crate) fn parse(token: &str) -> Option<Self> {
         Some(match token {
             "!" => Self::Not,
             "+" => Self::Positive,
@@ -60,19 +60,19 @@ impl UnaryOperator {
         })
     }
 
-    pub fn to_node<T: std::fmt::Debug>(&self, node: Node<T>) -> Result<Node<T>, Node<T>> {
+    pub(crate) fn to_node(&self, node: Node) -> Result<Node, Node> {
         Ok(match self {
             Self::Not => match node {
                 Node::Boolean(node) => {
                     Node::Boolean(NodeBoolean::Not(NodeBooleanNot::Boolean(Box::new(node))))
                 }
-                _ => {
+                node => {
                     return Err(node);
                 }
             },
             Self::Positive => match node {
                 Node::Uint64(node) => Node::Uint64(node),
-                _ => {
+                node => {
                     return Err(node);
                 }
             },
@@ -80,7 +80,7 @@ impl UnaryOperator {
                 Node::Uint64(node) => Node::Int64(NodeInt64::Negative(NodeInt64Negative::Uint64(
                     Box::new(node),
                 ))),
-                _ => {
+                node => {
                     return Err(node);
                 }
             },
@@ -89,7 +89,7 @@ impl UnaryOperator {
 }
 
 impl BinaryOperator {
-    pub fn parse(token: &str) -> Option<Self> {
+    pub(crate) fn parse(token: &str) -> Option<Self> {
         Some(match token {
             "**" => Self::Exponent,
             "&&" => Self::Both,
@@ -104,11 +104,7 @@ impl BinaryOperator {
         })
     }
 
-    pub fn to_node<T: std::fmt::Debug>(
-        &self,
-        left: Node<T>,
-        right: Node<T>,
-    ) -> Result<Node<T>, (Node<T>, Node<T>)> {
+    pub(crate) fn to_node(&self, left: Node, right: Node) -> Result<Node, (Node, Node)> {
         Ok(match self {
             Self::Both => match (left, right) {
                 (Node::Boolean(left), Node::Boolean(right)) => {
@@ -226,7 +222,7 @@ pub enum Associativity {
 }
 
 impl Operator {
-    pub fn associativity(&self) -> Associativity {
+    pub(crate) fn associativity(&self) -> Associativity {
         match self {
             Self::Unary(_) => Associativity::Right,
             Self::Scope(_) => Associativity::Left,
@@ -237,7 +233,7 @@ impl Operator {
         }
     }
 
-    pub fn specificity(&self) -> u8 {
+    pub(crate) fn specificity(&self) -> u8 {
         match self {
             Self::Scope(_) => 0,
             Self::Binary(operator) => match operator {

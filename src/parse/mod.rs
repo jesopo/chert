@@ -14,12 +14,12 @@ use crate::lex::Token;
 use crate::{ChertField, ChertStructTrait};
 use std::ops::Range;
 
-pub enum Keyword<T> {
-    Operand(Node<T>),
+enum Keyword {
+    Operand(Node),
     Operator(Operator),
 }
 
-fn get_keyword<T>(name: &str) -> Option<Keyword<T>> {
+fn get_keyword(name: &str) -> Option<Keyword> {
     Some(match name {
         "true" => Keyword::Operand(Node::Boolean(NodeBoolean::Constant(true))),
         "false" => Keyword::Operand(Node::Boolean(NodeBoolean::Constant(false))),
@@ -33,16 +33,16 @@ fn get_keyword<T>(name: &str) -> Option<Keyword<T>> {
 }
 
 #[derive(Debug)]
-pub enum Error<T: std::fmt::Debug> {
+pub enum Error {
     UnknownIdentifier(String),
     BadBinaryOperands {
         operator: BinaryOperator,
-        left: Node<T>,
-        right: Node<T>,
+        left: Node,
+        right: Node,
     },
     BadUnaryOperands {
         operator: UnaryOperator,
-        node: Node<T>,
+        node: Node,
     },
     UnknownBinaryOperator(String),
     UnknownUnaryOperator(String),
@@ -50,15 +50,16 @@ pub enum Error<T: std::fmt::Debug> {
     Unfinished,
     Empty,
     NonexistentScopeClose,
+    NotBoolean,
 }
 
 // shunting yard time baby
-fn pop_ops<T: std::fmt::Debug>(
+fn pop_ops(
     new_operator: &Operator,
-    operators: &mut Vec<Operator>,
-    operands: &mut Vec<Node<T>>,
-) -> Result<(), Error<T>> {
-    while let Some(operator) = operators.pop() {
+    operators: &mut Vec<(Operator, Range<usize>)>,
+    operands: &mut Vec<(Node, Range<usize>)>,
+) -> Result<(), Error> {
+    while let Some((operator, span)) = operators.pop() {
         if match operator.associativity() {
             Associativity::Left => operator.specificity() >= new_operator.specificity(),
             Associativity::Right => operator.specificity() > new_operator.specificity(),
@@ -73,79 +74,67 @@ fn pop_ops<T: std::fmt::Debug>(
                     }
                 },
                 Operator::Binary(operator) => {
-                    let right = operands.pop().ok_or(Error::MissingOperand)?;
-                    let left = operands.pop().ok_or(Error::MissingOperand)?;
-                    operands.push(operator.to_node(left, right).map_err(|(left, right)| {
-                        Error::BadBinaryOperands {
-                            operator,
-                            left,
-                            right,
-                        }
-                    })?);
+                    let (right, _right_span) = operands.pop().ok_or(Error::MissingOperand)?;
+                    let (left, _left_span) = operands.pop().ok_or(Error::MissingOperand)?;
+                    operands.push((
+                        operator.to_node(left, right).map_err(|(left, right)| {
+                            Error::BadBinaryOperands {
+                                operator,
+                                left,
+                                right,
+                            }
+                        })?,
+                        span,
+                    ));
                 }
                 Operator::Unary(operator) => {
-                    let node = operands.pop().ok_or(Error::MissingOperand)?;
-                    operands.push(
+                    let (node, _node_span) = operands.pop().ok_or(Error::MissingOperand)?;
+                    operands.push((
                         operator
                             .to_node(node)
                             .map_err(|node| Error::BadUnaryOperands { operator, node })?,
-                    );
+                        span,
+                    ));
                 }
             };
         } else {
-            operators.push(operator);
+            operators.push((operator, span));
             break;
         }
     }
     Ok(())
 }
 
-pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node<T>, Error<T>> {
+fn parse_inner<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node, Error> {
     let fields = T::fields();
 
     let mut operands = Vec::new();
     let mut operators = Vec::new();
     let mut last_was_operand = false;
 
-    for (token, _span) in tokens {
-        match token {
-            Token::String(value) => {
-                last_was_operand = true;
-                operands.push(Node::String(NodeString::Constant(value)))
-            }
+    for (token, span) in tokens {
+        let operand = match token {
+            Token::String(value) => Some(Node::String(NodeString::Constant(value))),
             Token::Number(value) => {
-                last_was_operand = true;
-                operands.push(Node::Uint64(NodeUint64::Constant(value.parse().unwrap())));
+                Some(Node::Uint64(NodeUint64::Constant(value.parse().unwrap())))
             }
-            Token::Ip(value) => {
-                last_was_operand = true;
-                operands.push(Node::Ip(NodeIp::Constant(value)));
-            }
-            Token::Cidr(value) => {
-                last_was_operand = true;
-                operands.push(Node::Cidr(NodeCidr::Constant(value)));
-            }
-            Token::Regex(value) => {
-                last_was_operand = true;
-                operands.push(Node::Regex(NodeRegex::Constant(value)));
-            }
+            Token::Ip(value) => Some(Node::Ip(NodeIp::Constant(value))),
+            Token::Cidr(value) => Some(Node::Cidr(NodeCidr::Constant(value))),
+            Token::Regex(value) => Some(Node::Regex(NodeRegex::Constant(value))),
             Token::Identifier(ref name) => {
                 let name = name.clone();
-                if let Some(keyword) = get_keyword(&name) {
+                let ret = if let Some(keyword) = get_keyword(&name) {
                     match keyword {
-                        Keyword::Operand(operand) => {
-                            last_was_operand = true;
-                            operands.push(operand);
-                        }
+                        Keyword::Operand(operand) => Some(operand),
                         Keyword::Operator(operator) => {
                             pop_ops(&operator, &mut operators, &mut operands)?;
-                            operators.push(operator);
+                            operators.push((operator, span.clone()));
                             last_was_operand = false;
+                            None
                         }
-                    };
+                    }
                 } else if let Some((_index, field)) = fields.get(&name) {
-                    last_was_operand = true;
-                    operands.push(match field {
+                    Some(match field {
                         ChertField::Boolean(_) => Node::Boolean(NodeBoolean::Variable { name }),
                         ChertField::Cidr(_) => Node::Cidr(NodeCidr::Variable { name }),
                         ChertField::Int64(_) => Node::Int64(NodeInt64::Variable { name }),
@@ -153,14 +142,16 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
                         ChertField::String(_) => Node::String(NodeString::Variable { name }),
                         ChertField::Uint64(_) => Node::Uint64(NodeUint64::Variable { name }),
                         ChertField::Regex(_) => Node::Regex(NodeRegex::Variable { name }),
-                    });
+                    })
                 } else {
                     return Err(Error::UnknownIdentifier(name));
-                }
+                };
+                ret
             }
             Token::ParenthesisOpen => {
                 last_was_operand = false;
-                operators.push(Operator::Scope(ScopeOperator::Open('(')));
+                operators.push((Operator::Scope(ScopeOperator::Open('(')), span.clone()));
+                None
             }
             Token::ParenthesisClose => {
                 last_was_operand = true;
@@ -169,6 +160,7 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
                     &mut operators,
                     &mut operands,
                 )?;
+                None
             }
             Token::Operator(operator) => {
                 let operator = if last_was_operand {
@@ -183,14 +175,17 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
                     )
                 };
                 pop_ops(&operator, &mut operators, &mut operands)?;
-                operators.push(operator);
+                operators.push((operator, span.clone()));
                 last_was_operand = false;
+                None
             }
-            Token::Space(_) => {
-                // skip space
-            }
+            Token::Space(_) => None,
             token => todo!("not implemented {token:?}"),
         };
+        if let Some(operand) = operand {
+            last_was_operand = true;
+            operands.push((operand, span));
+        }
     }
 
     pop_ops(
@@ -199,7 +194,7 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
         &mut operands,
     )?;
 
-    if let Some(root) = operands.pop() {
+    if let Some((root, _span)) = operands.pop() {
         if !operands.is_empty() {
             Err(Error::Unfinished)
         } else {
@@ -207,5 +202,37 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
         }
     } else {
         Err(Error::Empty)
+    }
+}
+
+#[derive(Debug)]
+pub struct Ast<T, R> {
+    pub root: R,
+    _type: Option<T>,
+}
+
+impl<T, R> Ast<T, R> {
+    pub(crate) unsafe fn new(root: R) -> Ast<T, R> {
+        Ast { root, _type: None }
+    }
+}
+
+pub fn parse<T: ChertStructTrait>(
+    tokens: Vec<(Token, Range<usize>)>,
+) -> Result<Ast<T, Node>, Error> {
+    Ok(Ast {
+        root: parse_inner::<T>(tokens)?,
+        _type: None,
+    })
+}
+
+pub fn parse_boolean<T: ChertStructTrait>(
+    tokens: Vec<(Token, Range<usize>)>,
+) -> Result<Ast<T, NodeBoolean>, Error> {
+    let root = parse_inner::<T>(tokens)?;
+    if let Node::Boolean(root) = root {
+        Ok(Ast { root, _type: None })
+    } else {
+        Err(Error::NotBoolean)
     }
 }

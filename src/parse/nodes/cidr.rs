@@ -1,8 +1,8 @@
 use cidr::IpCidr;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-pub enum NodeCidr<T> {
+#[derive(Debug, Deserialize, Serialize)]
+pub enum NodeCidr {
     Variable { name: String },
     Constant(IpCidr),
-    _Phantom(T),
 }

@@ -10,14 +10,9 @@ struct Variables {
 fn criterion_benchmark(c: &mut Criterion) {
     let mut expressions = Vec::new();
     for i in 0..1000 {
-        let tokens = chert::lex::lex(&format!("a + 1 == {i}")).unwrap();
-        let ast = chert::parse::parse::<Variables>(tokens).unwrap();
         expressions.push((
             i,
-            match ast {
-                chert::parse::nodes::Node::Boolean(node) => node,
-                _ => unreachable!(),
-            },
+            chert::parse::<Variables>(&format!("a + 1 == {i}")).unwrap(),
         ));
     }
     let engine = chert::compile::compile(expressions);
