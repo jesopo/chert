@@ -27,7 +27,7 @@ macro_rules! simple_field_type {
                 ChertField::$variant(field)
             }
         }
-    }
+    };
 }
 
 simple_field_type!(bool, Boolean);

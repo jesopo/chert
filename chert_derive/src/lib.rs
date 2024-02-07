@@ -1,7 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{quote, ToTokens};
-use syn::{parse::Parse, parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named, FieldsNamed, Token, Type};
+use syn::{
+    parse::Parse, parse_macro_input, Data::Struct, DataStruct, DeriveInput, Fields::Named,
+    FieldsNamed, Token, Type,
+};
 
 mod kw {
     syn::custom_keyword!(as_ref);
@@ -12,14 +15,18 @@ enum ChertAttribute {
         _as_ref: kw::as_ref,
         _equals: Token![=],
         as_type: Type,
-    }
+    },
 }
 
 impl Parse for ChertAttribute {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let lookahead = input.lookahead1();
         if lookahead.peek(kw::as_ref) {
-            Ok(Self::AsRef { _as_ref: input.parse()?, _equals: input.parse()?, as_type: input.parse()? })
+            Ok(Self::AsRef {
+                _as_ref: input.parse()?,
+                _equals: input.parse()?,
+                as_type: input.parse()?,
+            })
         } else {
             Err(lookahead.error())
         }
@@ -28,10 +35,17 @@ impl Parse for ChertAttribute {
 
 #[proc_macro_derive(ChertStruct, attributes(chert))]
 pub fn derive(input: TokenStream) -> TokenStream {
-    let DeriveInput { ident: struct_name, data, .. } = parse_macro_input!(input as DeriveInput);
+    let DeriveInput {
+        ident: struct_name,
+        data,
+        ..
+    } = parse_macro_input!(input as DeriveInput);
 
     let Struct(DataStruct {
-        fields: Named(FieldsNamed { named: ref named_fields, .. }),
+        fields: Named(FieldsNamed {
+            named: ref named_fields,
+            ..
+        }),
         ..
     }) = data
     else {
@@ -41,15 +55,18 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let mut fields = Vec::new();
     let mut accessor_functions = Vec::new();
 
-    for field in named_fields.iter()
-    {
-        let Some(field_name) = &field.ident else { continue };
+    for field in named_fields.iter() {
+        let Some(field_name) = &field.ident else {
+            continue;
+        };
         let mut field_type = field.ty.clone();
         let mut use_as_ref = false;
 
         for attr in &field.attrs {
             if attr.path().is_ident("chert") {
-                let Ok(chert_attr)  = attr.parse_args::<ChertAttribute>() else { panic!("Invalid chert attribute: {}", attr.to_token_stream()) };
+                let Ok(chert_attr) = attr.parse_args::<ChertAttribute>() else {
+                    panic!("Invalid chert attribute: {}", attr.to_token_stream())
+                };
 
                 let ChertAttribute::AsRef { as_type, .. } = chert_attr;
                 field_type = as_type;
@@ -76,7 +93,6 @@ pub fn derive(input: TokenStream) -> TokenStream {
                     object.#field_name.as_ref()
                 }
             });
-
         } else {
             accessor_functions.push(quote! {
                 #[allow(non_snake_case)]
