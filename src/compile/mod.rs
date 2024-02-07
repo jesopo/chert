@@ -12,6 +12,7 @@ use crate::{Ast, ChertField, ChertStructTrait};
 
 use cidr::{IpCidr, Ipv4Cidr};
 use regex::Regex;
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::net::{IpAddr, Ipv4Addr};
@@ -67,17 +68,17 @@ pub enum Operation<H: Hash> {
 }
 
 fn compile_ip<T>(
-    node: NodeIp,
+    node: &NodeIp,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
         NodeIp::Constant(value) => {
-            constants.ip.push(value);
+            constants.ip.push(*value);
             Pointer::Constant(constants.ip.len() - 1)
         }
         NodeIp::Variable { name } => {
-            if let Some((index, ChertField::Ip(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Ip(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -87,17 +88,17 @@ fn compile_ip<T>(
 }
 
 fn compile_cidr<T>(
-    node: NodeCidr,
+    node: &NodeCidr,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
         NodeCidr::Constant(value) => {
-            constants.cidr.push(value);
+            constants.cidr.push(*value);
             Pointer::Constant(constants.cidr.len() - 1)
         }
         NodeCidr::Variable { name } => {
-            if let Some((index, ChertField::Cidr(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Cidr(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -107,7 +108,7 @@ fn compile_cidr<T>(
 }
 
 fn compile_boolean<T, H: Hash>(
-    node: NodeBoolean,
+    node: &NodeBoolean,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -115,11 +116,11 @@ fn compile_boolean<T, H: Hash>(
 ) -> Pointer {
     match node {
         NodeBoolean::Constant(value) => {
-            constants.boolean.push(value);
+            constants.boolean.push(*value);
             Pointer::Constant(constants.boolean.len() - 1)
         }
         NodeBoolean::Variable { name } => {
-            if let Some((index, ChertField::Boolean(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Boolean(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -127,7 +128,7 @@ fn compile_boolean<T, H: Hash>(
         }
         NodeBoolean::Not(node) => match node {
             NodeBooleanNot::Boolean(node) => {
-                let child = compile_boolean(*node, fields, constants, dynamics, operations);
+                let child = compile_boolean(node, fields, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
                 operations.push((index, Operation::NotBool(child)));
@@ -136,8 +137,8 @@ fn compile_boolean<T, H: Hash>(
         },
         NodeBoolean::Both(node) => match node {
             NodeBooleanBoth::BooleanBoolean { left, right } => {
-                let left = compile_boolean(*left, fields, constants, dynamics, operations);
-                let right = compile_boolean(*right, fields, constants, dynamics, operations);
+                let left = compile_boolean(left, fields, constants, dynamics, operations);
+                let right = compile_boolean(right, fields, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
                 operations.push((index, Operation::BothBoolBool { left, right }));
@@ -146,8 +147,8 @@ fn compile_boolean<T, H: Hash>(
         },
         NodeBoolean::Either(node) => match node {
             NodeBooleanEither::BooleanBoolean { left, right } => {
-                let left = compile_boolean(*left, fields, constants, dynamics, operations);
-                let right = compile_boolean(*right, fields, constants, dynamics, operations);
+                let left = compile_boolean(left, fields, constants, dynamics, operations);
+                let right = compile_boolean(right, fields, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
                 operations.push((index, Operation::EitherBoolBool { left, right }));
@@ -166,8 +167,8 @@ fn compile_boolean<T, H: Hash>(
         },
         NodeBoolean::Equals(node) => match node {
             NodeBooleanEquals::BooleanBoolean { left, right } => {
-                let left = compile_boolean(*left, fields, constants, dynamics, operations);
-                let right = compile_boolean(*right, fields, constants, dynamics, operations);
+                let left = compile_boolean(left, fields, constants, dynamics, operations);
+                let right = compile_boolean(right, fields, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
                 operations.push((index, Operation::EqualsBoolBool { left, right }));
@@ -220,7 +221,7 @@ fn compile_boolean<T, H: Hash>(
 }
 
 fn compile_string<T, H: Hash>(
-    node: NodeString,
+    node: &NodeString,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -228,11 +229,11 @@ fn compile_string<T, H: Hash>(
 ) -> Pointer {
     match node {
         NodeString::Constant(value) => {
-            constants.string.push(value);
+            constants.string.push(value.clone());
             Pointer::Constant(constants.string.len() - 1)
         }
         NodeString::Variable { name } => {
-            if let Some((index, ChertField::String(_))) = fields.get(&name) {
+            if let Some((index, ChertField::String(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -240,8 +241,8 @@ fn compile_string<T, H: Hash>(
         }
         NodeString::Add(node) => match node {
             NodeStringAdd::StringString { left, right } => {
-                let left = compile_string(*left, fields, constants, dynamics, operations);
-                let right = compile_string(*right, fields, constants, dynamics, operations);
+                let left = compile_string(left, fields, constants, dynamics, operations);
+                let right = compile_string(right, fields, constants, dynamics, operations);
                 dynamics.string.push("".to_string());
                 let index = dynamics.string.len() - 1;
                 operations.push((index, Operation::AddStringString { left, right }));
@@ -252,7 +253,7 @@ fn compile_string<T, H: Hash>(
 }
 
 fn compile_int64<T, H: Hash>(
-    node: NodeInt64,
+    node: &NodeInt64,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -260,7 +261,7 @@ fn compile_int64<T, H: Hash>(
 ) -> Pointer {
     match node {
         NodeInt64::Variable { name } => {
-            if let Some((index, ChertField::Int64(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Int64(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -268,7 +269,7 @@ fn compile_int64<T, H: Hash>(
         }
         NodeInt64::Negative(node) => match node {
             NodeInt64Negative::Uint64(node) => {
-                let child = compile_uint64(*node, fields, constants, dynamics, operations);
+                let child = compile_uint64(node, fields, constants, dynamics, operations);
                 dynamics.int64.push(0);
                 let index = dynamics.int64.len() - 1;
                 operations.push((index, Operation::NegativeUint64(child)));
@@ -279,27 +280,27 @@ fn compile_int64<T, H: Hash>(
 }
 
 fn compile_regex<T>(
-    node: NodeRegex,
+    node: &NodeRegex,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
 ) -> Pointer {
     match node {
         NodeRegex::Variable { name } => {
-            if let Some((index, ChertField::Regex(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Regex(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
             }
         }
         NodeRegex::Constant(value) => {
-            constants.regex.push(value);
+            constants.regex.push(value.clone());
             Pointer::Constant(constants.regex.len() - 1)
         }
     }
 }
 
 fn compile_uint64<T, H: Hash>(
-    node: NodeUint64,
+    node: &NodeUint64,
     fields: &HashMap<String, (usize, ChertField<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
@@ -307,11 +308,11 @@ fn compile_uint64<T, H: Hash>(
 ) -> Pointer {
     match node {
         NodeUint64::Constant(value) => {
-            constants.uint64.push(value);
+            constants.uint64.push(*value);
             Pointer::Constant(constants.uint64.len() - 1)
         }
         NodeUint64::Variable { name } => {
-            if let Some((index, ChertField::Uint64(_))) = fields.get(&name) {
+            if let Some((index, ChertField::Uint64(_))) = fields.get(name) {
                 Pointer::Dynamic(*index)
             } else {
                 unreachable!();
@@ -319,8 +320,8 @@ fn compile_uint64<T, H: Hash>(
         }
         NodeUint64::Add(node) => match node {
             NodeUint64Add::Uint64Uint64 { left, right } => {
-                let left = compile_uint64(*left, fields, constants, dynamics, operations);
-                let right = compile_uint64(*right, fields, constants, dynamics, operations);
+                let left = compile_uint64(left, fields, constants, dynamics, operations);
+                let right = compile_uint64(right, fields, constants, dynamics, operations);
                 dynamics.uint64.push(0);
                 let index = dynamics.uint64.len() - 1;
                 operations.push((index, Operation::AddUint64Uint64 { left, right }));
@@ -329,8 +330,8 @@ fn compile_uint64<T, H: Hash>(
         },
         NodeUint64::Subtract(node) => match node {
             NodeUint64Subtract::Uint64Uint64 { left, right } => {
-                let left = compile_uint64(*left, fields, constants, dynamics, operations);
-                let right = compile_uint64(*right, fields, constants, dynamics, operations);
+                let left = compile_uint64(left, fields, constants, dynamics, operations);
+                let right = compile_uint64(right, fields, constants, dynamics, operations);
                 dynamics.uint64.push(0);
                 let index = dynamics.uint64.len() - 1;
                 operations.push((index, Operation::SubtractUint64Uint64 { left, right }));
@@ -491,18 +492,24 @@ impl<T, H: Hash> Engine<T, H> {
     }
 }
 
-pub unsafe fn compile_unsafe<T: ChertStructTrait, H: Hash>(
-    expressions: impl IntoIterator<Item = (H, NodeBoolean)>,
-) -> Engine<T, H> {
+
+pub fn compile<T, H, I>(expressions: I) -> Engine<T, H>
+    where T: ChertStructTrait,
+          H: Hash,
+          I: IntoIterator<Item = (H, Ast<T, NodeBoolean>)>
+{
     let expressions = expressions
         .into_iter()
-        .map(|(id, root)| (id, Ast::<T, _>::new(root)));
-    compile(expressions)
+        .map(|(id, ast)| (id, ast.root));
+    compile_unsafe(expressions)
 }
 
-pub fn compile<T: ChertStructTrait, H: Hash>(
-    expressions: impl IntoIterator<Item = (H, Ast<T, NodeBoolean>)>,
-) -> Engine<T, H> {
+pub fn compile_unsafe<T, H, N, I>(expressions: I) -> Engine<T, H>
+    where T: ChertStructTrait,
+          H: Hash,
+          N: Borrow<NodeBoolean>,
+          I: IntoIterator<Item = (H, N)>
+{
     let fields = T::fields();
     let mut constants = Scratch::new();
     let mut initial_dynamics = Scratch::new();
@@ -524,9 +531,11 @@ pub fn compile<T: ChertStructTrait, H: Hash>(
     let mut max_size_dynamics = initial_dynamics.clone();
     let mut operations = Vec::new();
     for (id, expression) in expressions {
+        let expression = expression.borrow();
         let mut dynamics = initial_dynamics.clone();
+
         compile_boolean(
-            expression.root,
+            expression,
             &fields,
             &mut constants,
             &mut dynamics,

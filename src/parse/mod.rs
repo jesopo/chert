@@ -215,10 +215,6 @@ impl<T, R> Ast<T, R> {
     pub fn get_root(&self) -> &R {
         &self.root
     }
-
-    pub(crate) unsafe fn new(root: R) -> Ast<T, R> {
-        Ast { root, _type: None }
-    }
 }
 
 pub fn parse<T: ChertStructTrait>(
