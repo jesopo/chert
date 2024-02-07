@@ -7,17 +7,17 @@ use super::regex::NodeRegex;
 use super::string::NodeString;
 use super::uint64::NodeUint64;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanWithin {
     IpCidr { left: NodeIp, right: NodeCidr },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanNot {
     Boolean(Box<NodeBoolean>),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanBoth {
     BooleanBoolean {
         left: Box<NodeBoolean>,
@@ -25,7 +25,7 @@ pub enum NodeBooleanBoth {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanEither {
     BooleanBoolean {
         left: Box<NodeBoolean>,
@@ -33,7 +33,7 @@ pub enum NodeBooleanEither {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanEquals {
     BooleanBoolean {
         left: Box<NodeBoolean>,
@@ -57,12 +57,12 @@ pub enum NodeBooleanEquals {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBooleanMatches {
     StringRegex { left: NodeString, right: NodeRegex },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeBoolean {
     Variable { name: String },
     Constant(bool),

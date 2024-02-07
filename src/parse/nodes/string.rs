@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeStringAdd {
     StringString {
         left: Box<NodeString>,
@@ -8,7 +8,7 @@ pub enum NodeStringAdd {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeString {
     Variable { name: String },
     Constant(String),

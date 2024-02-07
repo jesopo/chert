@@ -14,7 +14,7 @@ use self::regex::NodeRegex;
 use self::string::NodeString;
 use self::uint64::NodeUint64;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Node {
     Boolean(NodeBoolean),
     Cidr(NodeCidr),

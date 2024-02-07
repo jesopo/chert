@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeUint64Add {
     Uint64Uint64 {
         left: Box<NodeUint64>,
@@ -8,7 +8,7 @@ pub enum NodeUint64Add {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeUint64Subtract {
     Uint64Uint64 {
         left: Box<NodeUint64>,
@@ -16,7 +16,7 @@ pub enum NodeUint64Subtract {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeUint64 {
     Variable { name: String },
     Constant(u64),
