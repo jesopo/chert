@@ -196,7 +196,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_int64(right, fields, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsUint64Uint64 { left, right }));
+                operations.push((index, Operation::EqualsInt64Int64 { left, right }));
                 Pointer::Dynamic(index)
             }
             NodeBooleanEquals::IpIp { left, right } => {

@@ -139,6 +139,12 @@ impl BinaryOperator {
                         right,
                     }))
                 }
+                (Node::Int64(left), Node::Int64(right)) => {
+                    Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::Int64Int64 {
+                        left,
+                        right,
+                    }))
+                }
                 (Node::Ip(left), Node::Ip(right)) => {
                     Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::IpIp { left, right }))
                 }
