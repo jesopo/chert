@@ -3,7 +3,7 @@ pub mod lex;
 pub mod parse;
 
 pub use crate::compile::{compile, Engine};
-pub use chert_accessor::{ChertField, ChertStructTrait};
+pub use chert_accessor::{ChertField, ChertFieldType, ChertStructTrait};
 pub use chert_derive::ChertStruct;
 
 #[derive(Debug)]

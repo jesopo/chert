@@ -3,6 +3,12 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::net::IpAddr;
 
+pub trait ChertFieldType {
+    type AccessedAs: ?Sized;
+
+    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T>;
+}
+
 pub enum ChertField<T> {
     Boolean(fn(&T) -> &bool),
     Cidr(fn(&T) -> &IpCidr),
@@ -13,41 +19,24 @@ pub enum ChertField<T> {
     Regex(fn(&T) -> &Regex),
 }
 
-impl<T> From<fn(&T) -> &String> for ChertField<T> {
-    fn from(field: fn(&T) -> &String) -> Self {
-        Self::String(field)
+macro_rules! simple_field_type {
+    ($type:ty, $variant:ident) => {
+        impl ChertFieldType for $type {
+            type AccessedAs = $type;
+            fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T> {
+                ChertField::$variant(field)
+            }
+        }
     }
 }
 
-impl<T> From<fn(&T) -> &u64> for ChertField<T> {
-    fn from(field: fn(&T) -> &u64) -> Self {
-        Self::Uint64(field)
-    }
-}
-
-impl<T> From<fn(&T) -> &i64> for ChertField<T> {
-    fn from(field: fn(&T) -> &i64) -> Self {
-        Self::Int64(field)
-    }
-}
-
-impl<T> From<fn(&T) -> &bool> for ChertField<T> {
-    fn from(field: fn(&T) -> &bool) -> Self {
-        Self::Boolean(field)
-    }
-}
-
-impl<T> From<fn(&T) -> &IpAddr> for ChertField<T> {
-    fn from(field: fn(&T) -> &IpAddr) -> Self {
-        Self::Ip(field)
-    }
-}
-
-impl<T> From<fn(&T) -> &IpCidr> for ChertField<T> {
-    fn from(field: fn(&T) -> &IpCidr) -> Self {
-        Self::Cidr(field)
-    }
-}
+simple_field_type!(bool, Boolean);
+simple_field_type!(i64, Int64);
+simple_field_type!(u64, Uint64);
+simple_field_type!(IpAddr, Ip);
+simple_field_type!(IpCidr, Cidr);
+simple_field_type!(String, String);
+simple_field_type!(Regex, Regex);
 
 impl<T> From<fn(&T) -> &Regex> for ChertField<T> {
     fn from(field: fn(&T) -> &Regex) -> Self {

@@ -30,7 +30,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         let ident_str = i.to_string();
 
         fields.push(quote! {
-            (#ident_str, <chert::ChertField::<Self> as From<fn(&#ident) -> &#t>>::from(Self::#accessor_name))
+            (#ident_str, <#t as chert::ChertFieldType>::from_field(Self::#accessor_name))
         });
 
         accessor_functions.push(quote! {
