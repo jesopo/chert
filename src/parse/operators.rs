@@ -133,6 +133,12 @@ impl BinaryOperator {
                 }
             },
             Self::Equals => match (left, right) {
+                (Node::Boolean(left), Node::Boolean(right)) => {
+                    Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::BooleanBoolean {
+                        left: Box::new(left),
+                        right: Box::new(right),
+                    }))
+                }
                 (Node::Uint64(left), Node::Uint64(right)) => {
                     Node::Boolean(NodeBoolean::Equals(NodeBooleanEquals::Uint64Uint64 {
                         left,
