@@ -14,7 +14,7 @@ pub enum ChertField<T> {
     Cidr(fn(&T) -> &IpCidr),
     Int64(fn(&T) -> &i64),
     Ip(fn(&T) -> &IpAddr),
-    String(fn(&T) -> &String),
+    String(fn(&T) -> &str),
     Uint64(fn(&T) -> &u64),
     Regex(fn(&T) -> &Regex),
 }
@@ -35,8 +35,15 @@ simple_field_type!(i64, Int64);
 simple_field_type!(u64, Uint64);
 simple_field_type!(IpAddr, Ip);
 simple_field_type!(IpCidr, Cidr);
-simple_field_type!(String, String);
+simple_field_type!(str, String);
 simple_field_type!(Regex, Regex);
+
+impl ChertFieldType for String {
+    type AccessedAs = str;
+    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T> {
+        ChertField::String(field)
+    }
+}
 
 impl<T> From<fn(&T) -> &Regex> for ChertField<T> {
     fn from(field: fn(&T) -> &Regex) -> Self {
