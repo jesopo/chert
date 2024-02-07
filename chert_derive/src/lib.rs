@@ -15,8 +15,6 @@ pub fn derive(input: TokenStream) -> TokenStream {
         panic!("must be a struct with named fields");
     };
 
-    let module_name = Ident::new(&format!("{}_chert_accessors", ident), ident.span());
-
     let mut fields = Vec::new();
     let mut accessor_functions = Vec::new();
 
@@ -25,30 +23,26 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .filter_map(|f| f.ident.as_ref().map(|i| (i, &f.ty)))
     {
         let accessor_name = Ident::new(
-            &format!("get_{}", i.to_string().to_ascii_lowercase()),
+            &format!("_chert_get_{}", i.to_string().to_ascii_lowercase()),
             i.span(),
         );
 
         let ident_str = i.to_string();
 
         fields.push(quote! {
-            (#ident_str, <chert::ChertField::<Self> as From<fn(&#ident) -> &#t>>::from(#module_name::#accessor_name))
+            (#ident_str, <chert::ChertField::<Self> as From<fn(&#ident) -> &#t>>::from(Self::#accessor_name))
         });
 
         accessor_functions.push(quote! {
             #[allow(non_snake_case)]
-            pub(super) fn #accessor_name(object: &#ident) -> &#t {
+            fn #accessor_name(object: &#ident) -> &#t {
                 &object.#i
             }
         });
     }
 
     quote! {
-        #[allow(non_snake_case)]
-        mod #module_name {
-            // Blanket import needed so that type names can be resolved the same way
-            // they are in the original struct definition
-            use super::*;
+        impl #ident {
             #(#accessor_functions)*
         }
 
