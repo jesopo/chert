@@ -1,4 +1,5 @@
 use cidr::IpCidr;
+use regex::Regex;
 use std::collections::HashMap;
 use std::net::IpAddr;
 
@@ -9,6 +10,7 @@ pub enum ChertField<T> {
     Ip(fn(&T) -> &IpAddr),
     String(fn(&T) -> &String),
     Uint64(fn(&T) -> &u64),
+    Regex(fn(&T) -> &Regex),
 }
 
 impl<T> From<fn(&T) -> &String> for ChertField<T> {
@@ -47,6 +49,12 @@ impl<T> From<fn(&T) -> &IpCidr> for ChertField<T> {
     }
 }
 
+impl<T> From<fn(&T) -> &Regex> for ChertField<T> {
+    fn from(field: fn(&T) -> &Regex) -> Self {
+        Self::Regex(field)
+    }
+}
+
 pub trait ChertStructTrait: Sized + std::fmt::Debug {
     fn fields() -> HashMap<String, (usize, ChertField<Self>)>;
 }
@@ -60,6 +68,7 @@ impl<T> ChertField<T> {
             Self::Ip(_) => 3,
             Self::String(_) => 4,
             Self::Uint64(_) => 5,
+            Self::Regex(_) => 6,
         }
     }
 }
@@ -76,6 +85,7 @@ impl<T> std::fmt::Debug for ChertField<T> {
                 Self::Ip(_) => "Ip(_)",
                 Self::String(_) => "String(_)",
                 Self::Uint64(_) => "Uint64(_)",
+                Self::Regex(_) => "Regex(_)",
             }
         )
     }

@@ -211,7 +211,7 @@ fn compile_boolean<T, H: Hash>(
         NodeBoolean::Matches(node) => match node {
             NodeBooleanMatches::StringRegex { left, right } => {
                 let left = compile_string(left, fields, constants, dynamics, operations);
-                let right = compile_regex(right, constants);
+                let right = compile_regex(right, fields, constants);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
                 operations.push((index, Operation::MatchesStringRegex { left, right }));
@@ -281,9 +281,20 @@ fn compile_int64<T, H: Hash>(
     }
 }
 
-fn compile_regex<T>(node: NodeRegex<T>, constants: &mut Scratch) -> Pointer {
+fn compile_regex<T>(
+    node: NodeRegex<T>,
+    fields: &HashMap<String, (usize, ChertField<T>)>,
+    constants: &mut Scratch,
+) -> Pointer {
     match node {
         NodeRegex::_Phantom(_) => unreachable!(),
+        NodeRegex::Variable { name } => {
+            if let Some((index, ChertField::Regex(_))) = fields.get(&name) {
+                Pointer::Dynamic(*index)
+            } else {
+                unreachable!();
+            }
+        }
         NodeRegex::Constant(value) => {
             constants.regex.push(value);
             Pointer::Constant(constants.regex.len() - 1)
@@ -407,6 +418,7 @@ impl<T, H: Hash> Engine<T, H> {
                 ChertField::Ip(field) => dynamics.ip[*index] = *(*field)(variables),
                 ChertField::String(field) => dynamics.string[*index] = (*field)(variables).clone(),
                 ChertField::Uint64(field) => dynamics.uint64[*index] = *(*field)(variables),
+                ChertField::Regex(field) => dynamics.regex[*index] = (*field)(variables).clone(),
             };
         }
 
@@ -499,6 +511,7 @@ pub fn compile<T: ChertStructTrait + Clone, H: Hash>(
             ChertField::Ip(_) => initial_dynamics.ip.push(IpAddr::V4(Ipv4Addr::from(0))),
             ChertField::String(_) => initial_dynamics.string.push("".to_string()),
             ChertField::Uint64(_) => initial_dynamics.uint64.push(0),
+            ChertField::Regex(_) => initial_dynamics.regex.push(Regex::new("").unwrap()),
         };
     }
 

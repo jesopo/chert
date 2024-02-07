@@ -152,6 +152,7 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
                         ChertField::Ip(_) => Node::Ip(NodeIp::Variable { name }),
                         ChertField::String(_) => Node::String(NodeString::Variable { name }),
                         ChertField::Uint64(_) => Node::Uint64(NodeUint64::Variable { name }),
+                        ChertField::Regex(_) => Node::Regex(NodeRegex::Variable { name }),
                     });
                 } else {
                     return Err(Error::UnknownIdentifier(name));

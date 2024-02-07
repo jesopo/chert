@@ -13,3 +13,4 @@ readme = "README.md"
 
 [dependencies]
 cidr = "0.2.1"
+regex = "1.10.3"
