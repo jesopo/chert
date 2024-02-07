@@ -138,8 +138,9 @@ pub fn parse<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<
                             operands.push(operand);
                         }
                         Keyword::Operator(operator) => {
-                            last_was_operand = false;
+                            pop_ops(&operator, &mut operators, &mut operands)?;
                             operators.push(operator);
+                            last_was_operand = false;
                         }
                     };
                 } else if let Some((_index, field)) = fields.get(&name) {
