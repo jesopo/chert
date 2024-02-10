@@ -215,6 +215,9 @@ impl<T, R> Ast<T, R> {
     pub fn get_root(&self) -> &R {
         &self.root
     }
+    pub fn into_root(self) -> R {
+        self.root
+    }
 }
 
 pub fn parse<T: ChertStructTrait>(
