@@ -33,7 +33,7 @@ impl Parse for ChertAttribute {
     }
 }
 
-#[proc_macro_derive(ChertStruct, attributes(chert))]
+#[proc_macro_derive(Variables, attributes(chert))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let DeriveInput {
         ident: struct_name,
@@ -82,13 +82,13 @@ pub fn derive(input: TokenStream) -> TokenStream {
         let ident_str = field_name.to_string();
 
         fields.push(quote! {
-            (#ident_str, <#field_type as chert::ChertFieldType>::from_field(Self::#accessor_name))
+            (#ident_str, <#field_type as chert::variables::VariableType>::from_field(Self::#accessor_name))
         });
 
         if use_as_ref {
             accessor_functions.push(quote! {
                 #[allow(non_snake_case)]
-                fn #accessor_name(object: &#struct_name) -> &<#field_type as chert::ChertFieldType>::AccessedAs {
+                fn #accessor_name(object: &#struct_name) -> &<#field_type as chert::variables::VariableType>::AccessedAs {
                     use std::convert::AsRef;
                     object.#field_name.as_ref()
                 }
@@ -96,7 +96,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         } else {
             accessor_functions.push(quote! {
                 #[allow(non_snake_case)]
-                fn #accessor_name(object: &#struct_name) -> &<#field_type as chert::ChertFieldType>::AccessedAs {
+                fn #accessor_name(object: &#struct_name) -> &<#field_type as chert::variables::VariableType>::AccessedAs {
                     &object.#field_name
                 }
             });
@@ -108,14 +108,14 @@ pub fn derive(input: TokenStream) -> TokenStream {
             #(#accessor_functions)*
         }
 
-        impl chert::ChertStructTrait for #struct_name {
-            fn fields() -> std::collections::HashMap<String, (usize, chert::ChertField<Self>)> {
+        impl chert::variables::Variables for #struct_name {
+            fn variables() -> std::collections::HashMap<String, (usize, chert::variables::Variable<Self>)> {
                 use std::collections::HashMap;
-                use chert::ChertField;
+                use chert::variables::Variable;
 
                 let mut field_counts: HashMap<u8, usize> = HashMap::new();
-                let mut indexed_fields: HashMap<String, (usize, ChertField<Self>)> = HashMap::new();
-                let unindexed_fields: HashMap<&'static str, ChertField<Self>> = HashMap::from([#(#fields),*]);
+                let mut indexed_fields: HashMap<String, (usize, Variable<Self>)> = HashMap::new();
+                let unindexed_fields: HashMap<&'static str, Variable<Self>> = HashMap::from([#(#fields),*]);
 
                 for (name, field) in unindexed_fields.into_iter() {
                     let type_key = field.type_key();

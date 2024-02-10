@@ -11,7 +11,7 @@ use self::nodes::uint64::NodeUint64;
 use self::nodes::Node;
 use self::operators::{Associativity, BinaryOperator, Operator, ScopeOperator, UnaryOperator};
 use crate::lex::Token;
-use crate::{ChertField, ChertStructTrait};
+use crate::variables::{Variable, Variables};
 use std::ops::Range;
 
 enum Keyword {
@@ -105,8 +105,8 @@ fn pop_ops(
     Ok(())
 }
 
-fn parse_inner<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node, Error> {
-    let fields = T::fields();
+fn parse_inner<T: Variables>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node, Error> {
+    let fields = T::variables();
 
     let mut operands = Vec::new();
     let mut operators = Vec::new();
@@ -135,13 +135,13 @@ fn parse_inner<T: ChertStructTrait>(tokens: Vec<(Token, Range<usize>)>) -> Resul
                     }
                 } else if let Some((_index, field)) = fields.get(&name) {
                     Some(match field {
-                        ChertField::Boolean(_) => Node::Boolean(NodeBoolean::Variable { name }),
-                        ChertField::Cidr(_) => Node::Cidr(NodeCidr::Variable { name }),
-                        ChertField::Int64(_) => Node::Int64(NodeInt64::Variable { name }),
-                        ChertField::Ip(_) => Node::Ip(NodeIp::Variable { name }),
-                        ChertField::String(_) => Node::String(NodeString::Variable { name }),
-                        ChertField::Uint64(_) => Node::Uint64(NodeUint64::Variable { name }),
-                        ChertField::Regex(_) => Node::Regex(NodeRegex::Variable { name }),
+                        Variable::Boolean(_) => Node::Boolean(NodeBoolean::Variable { name }),
+                        Variable::Cidr(_) => Node::Cidr(NodeCidr::Variable { name }),
+                        Variable::Int64(_) => Node::Int64(NodeInt64::Variable { name }),
+                        Variable::Ip(_) => Node::Ip(NodeIp::Variable { name }),
+                        Variable::String(_) => Node::String(NodeString::Variable { name }),
+                        Variable::Uint64(_) => Node::Uint64(NodeUint64::Variable { name }),
+                        Variable::Regex(_) => Node::Regex(NodeRegex::Variable { name }),
                     })
                 } else {
                     return Err(Error::UnknownIdentifier(name));
@@ -220,16 +220,14 @@ impl<T, R> Ast<T, R> {
     }
 }
 
-pub fn parse<T: ChertStructTrait>(
-    tokens: Vec<(Token, Range<usize>)>,
-) -> Result<Ast<T, Node>, Error> {
+pub fn parse<T: Variables>(tokens: Vec<(Token, Range<usize>)>) -> Result<Ast<T, Node>, Error> {
     Ok(Ast {
         root: parse_inner::<T>(tokens)?,
         _type: None,
     })
 }
 
-pub fn parse_boolean<T: ChertStructTrait>(
+pub fn parse_boolean<T: Variables>(
     tokens: Vec<(Token, Range<usize>)>,
 ) -> Result<Ast<T, NodeBoolean>, Error> {
     let root = parse_inner::<T>(tokens)?;

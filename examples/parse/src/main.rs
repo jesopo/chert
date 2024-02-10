@@ -1,4 +1,4 @@
-use chert_derive::ChertStruct;
+use chert::Variables;
 use cidr::IpCidr;
 use clap::Parser;
 
@@ -9,7 +9,7 @@ struct Arguments {
     expression: String,
 }
 
-#[derive(Debug, ChertStruct)]
+#[derive(Debug, Variables)]
 struct Variables {
     a: u64,
     b: IpCidr,

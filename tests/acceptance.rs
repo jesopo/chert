@@ -12,7 +12,7 @@ fn re(s: &'static str) -> regex::Regex {
 
 #[test]
 fn test_boolean() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: bool,
     }
@@ -27,7 +27,7 @@ fn test_boolean() {
 
 #[test]
 fn test_cidr() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: cidr::IpCidr,
     }
@@ -52,7 +52,7 @@ fn test_cidr() {
 
 #[test]
 fn test_int64() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: i64,
     }
@@ -67,7 +67,7 @@ fn test_int64() {
 
 #[test]
 fn test_ip() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: std::net::IpAddr,
     }
@@ -82,7 +82,7 @@ fn test_ip() {
 
 #[test]
 fn test_string() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: String,
     }
@@ -107,7 +107,7 @@ fn test_string() {
 
 #[test]
 fn test_uint64() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: u64,
     }
@@ -122,7 +122,7 @@ fn test_uint64() {
 
 #[test]
 fn test_regex() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: regex::Regex,
     }
@@ -137,7 +137,7 @@ fn test_regex() {
 
 #[test]
 fn test_all_types() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: bool,
         b: cidr::IpCidr,

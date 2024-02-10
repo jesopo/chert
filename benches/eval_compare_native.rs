@@ -2,17 +2,17 @@ use cidr::{IpCidr, Ipv4Cidr};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::net::{IpAddr, Ipv4Addr};
 
-use chert_derive::ChertStruct;
+use chert_derive::Variables;
 
 fn criterion_1(c: &mut Criterion) {
     let mut group = c.benchmark_group("$i + 1 == 3");
-    #[derive(ChertStruct, Debug)]
+    #[derive(Variables, Debug)]
     struct Variables {
         i: u64,
     }
 
     let ast = chert::parse("i + 1 == 3").unwrap();
-    let engine = chert::compile::compile(Vec::from([(0, ast)]));
+    let engine = chert::compile(Vec::from([(0, ast)]));
     let variables = Variables { i: 2 };
 
     group.bench_function("chert", |b| b.iter(|| engine.eval(&variables)));
@@ -23,13 +23,13 @@ fn criterion_1(c: &mut Criterion) {
 
 fn criterion_2(c: &mut Criterion) {
     let mut group = c.benchmark_group("$ip in 1.1.1.0/24");
-    #[derive(ChertStruct, Debug)]
+    #[derive(Variables, Debug)]
     struct Variables {
         ip: IpAddr,
     }
 
     let ast = chert::parse("ip in 1.1.1.0/24").unwrap();
-    let engine = chert::compile::compile(Vec::from([(0, ast)]));
+    let engine = chert::compile(Vec::from([(0, ast)]));
     let variables = Variables {
         ip: IpAddr::V4(Ipv4Addr::from(16843009)),
     };

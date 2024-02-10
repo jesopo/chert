@@ -1,6 +1,6 @@
 #[test]
 fn test_serialize() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: u64,
     }
@@ -15,7 +15,7 @@ fn test_serialize() {
 
 #[test]
 fn test_serialize_with_id() {
-    #[derive(chert::ChertStruct, Debug)]
+    #[derive(chert::Variables, Debug)]
     struct Variables {
         a: u64,
     }

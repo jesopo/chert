@@ -1,4 +1,4 @@
-use chert_derive::ChertStruct;
+use chert::Variables;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -8,7 +8,7 @@ struct Arguments {
     expression: String,
 }
 
-#[derive(Clone, Debug, ChertStruct)]
+#[derive(Clone, Debug, Variables)]
 struct Variables {
     _a: i64,
 }

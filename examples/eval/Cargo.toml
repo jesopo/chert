@@ -8,6 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
 chert = { path = "../../" }
-chert_derive = { path = "../../chert_derive" }
-chert_accessor = { path = "../../chert_accessor" }
 cidr = "0.2.1"

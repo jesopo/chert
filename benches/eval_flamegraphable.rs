@@ -1,8 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use chert_derive::ChertStruct;
+use chert_derive::Variables;
 
-#[derive(Clone, ChertStruct, Debug)]
+#[derive(Clone, Variables, Debug)]
 struct Variables {
     a: u64,
 }
@@ -10,12 +10,9 @@ struct Variables {
 fn criterion_benchmark(c: &mut Criterion) {
     let mut expressions = Vec::new();
     for i in 0..1000 {
-        expressions.push((
-            i,
-            chert::parse::<Variables>(&format!("a + 1 == {i}")).unwrap(),
-        ));
+        expressions.push((i, chert::parse(&format!("a + 1 == {i}")).unwrap()));
     }
-    let engine = chert::compile::compile(expressions);
+    let engine = chert::compile(expressions);
     let variables = Variables { a: 2 };
 
     c.bench_function("bench", |b| b.iter(|| engine.eval(black_box(&variables))));

@@ -3,14 +3,14 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-pub trait ChertFieldType {
+pub trait VariableType {
     type AccessedAs: ?Sized;
 
-    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T>;
+    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> Variable<T>;
 }
 
 #[derive(Clone)]
-pub enum ChertField<T> {
+pub enum Variable<T> {
     Boolean(fn(&T) -> &bool),
     Cidr(fn(&T) -> &IpCidr),
     Int64(fn(&T) -> &i64),
@@ -22,10 +22,10 @@ pub enum ChertField<T> {
 
 macro_rules! simple_field_type {
     ($type:ty, $variant:ident) => {
-        impl ChertFieldType for $type {
+        impl VariableType for $type {
             type AccessedAs = $type;
-            fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T> {
-                ChertField::$variant(field)
+            fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> Variable<T> {
+                Variable::$variant(field)
             }
         }
     };
@@ -39,24 +39,18 @@ simple_field_type!(IpCidr, Cidr);
 simple_field_type!(str, String);
 simple_field_type!(Regex, Regex);
 
-impl ChertFieldType for String {
+impl VariableType for String {
     type AccessedAs = str;
-    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> ChertField<T> {
-        ChertField::String(field)
+    fn from_field<T>(field: fn(&T) -> &Self::AccessedAs) -> Variable<T> {
+        Variable::String(field)
     }
 }
 
-impl<T> From<fn(&T) -> &Regex> for ChertField<T> {
-    fn from(field: fn(&T) -> &Regex) -> Self {
-        Self::Regex(field)
-    }
+pub trait Variables: Sized + std::fmt::Debug {
+    fn variables() -> HashMap<String, (usize, Variable<Self>)>;
 }
 
-pub trait ChertStructTrait: Sized + std::fmt::Debug {
-    fn fields() -> HashMap<String, (usize, ChertField<Self>)>;
-}
-
-impl<T> ChertField<T> {
+impl<T> Variable<T> {
     pub fn type_key(&self) -> u8 {
         match self {
             Self::Boolean(_) => 0,
@@ -70,7 +64,7 @@ impl<T> ChertField<T> {
     }
 }
 
-impl<T> std::fmt::Debug for ChertField<T> {
+impl<T> std::fmt::Debug for Variable<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
