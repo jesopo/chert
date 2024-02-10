@@ -492,23 +492,22 @@ impl<T, H: Hash> Engine<T, H> {
     }
 }
 
-
 pub fn compile<T, H, I>(expressions: I) -> Engine<T, H>
-    where T: ChertStructTrait,
-          H: Hash,
-          I: IntoIterator<Item = (H, Ast<T, NodeBoolean>)>
+where
+    T: ChertStructTrait,
+    H: Hash,
+    I: IntoIterator<Item = (H, Ast<T, NodeBoolean>)>,
 {
-    let expressions = expressions
-        .into_iter()
-        .map(|(id, ast)| (id, ast.root));
+    let expressions = expressions.into_iter().map(|(id, ast)| (id, ast.root));
     compile_unsafe(expressions)
 }
 
 pub fn compile_unsafe<T, H, N, I>(expressions: I) -> Engine<T, H>
-    where T: ChertStructTrait,
-          H: Hash,
-          N: Borrow<NodeBoolean>,
-          I: IntoIterator<Item = (H, N)>
+where
+    T: ChertStructTrait,
+    H: Hash,
+    N: Borrow<NodeBoolean>,
+    I: IntoIterator<Item = (H, N)>,
 {
     let fields = T::fields();
     let mut constants = Scratch::new();
