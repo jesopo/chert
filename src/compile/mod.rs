@@ -50,7 +50,7 @@ pub enum Pointer {
 }
 
 #[derive(Clone, Debug)]
-pub enum Operation<H: Hash> {
+pub enum Instruction<H: Hash> {
     AddStringString { left: Pointer, right: Pointer },
     AddUint64Uint64 { left: Pointer, right: Pointer },
     BothBoolBool { left: Pointer, right: Pointer },
@@ -113,7 +113,7 @@ fn compile_boolean<T, H: Hash>(
     variables: &HashMap<String, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
-    operations: &mut Vec<(usize, Operation<H>)>,
+    operations: &mut Vec<(usize, Instruction<H>)>,
 ) -> Pointer {
     match node {
         NodeBoolean::Constant(value) => {
@@ -132,7 +132,7 @@ fn compile_boolean<T, H: Hash>(
                 let child = compile_boolean(node, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::NotBool(child)));
+                operations.push((index, Instruction::NotBool(child)));
                 Pointer::Dynamic(index)
             }
         },
@@ -142,7 +142,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_boolean(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::BothBoolBool { left, right }));
+                operations.push((index, Instruction::BothBoolBool { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -152,7 +152,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_boolean(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EitherBoolBool { left, right }));
+                operations.push((index, Instruction::EitherBoolBool { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -162,7 +162,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_cidr(right, variables, constants);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::WithinIpCidr { left, right }));
+                operations.push((index, Instruction::WithinIpCidr { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -172,7 +172,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_boolean(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsBoolBool { left, right }));
+                operations.push((index, Instruction::EqualsBoolBool { left, right }));
                 Pointer::Dynamic(index)
             }
             NodeBooleanEquals::StringString { left, right } => {
@@ -180,7 +180,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_string(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsStringString { left, right }));
+                operations.push((index, Instruction::EqualsStringString { left, right }));
                 Pointer::Dynamic(index)
             }
             NodeBooleanEquals::Uint64Uint64 { left, right } => {
@@ -188,7 +188,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_uint64(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsUint64Uint64 { left, right }));
+                operations.push((index, Instruction::EqualsUint64Uint64 { left, right }));
                 Pointer::Dynamic(index)
             }
             NodeBooleanEquals::Int64Int64 { left, right } => {
@@ -196,7 +196,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_int64(right, variables, constants, dynamics, operations);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsInt64Int64 { left, right }));
+                operations.push((index, Instruction::EqualsInt64Int64 { left, right }));
                 Pointer::Dynamic(index)
             }
             NodeBooleanEquals::IpIp { left, right } => {
@@ -204,7 +204,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_ip(right, variables, constants);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::EqualsIpIP { left, right }));
+                operations.push((index, Instruction::EqualsIpIP { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -214,7 +214,7 @@ fn compile_boolean<T, H: Hash>(
                 let right = compile_regex(right, variables, constants);
                 dynamics.boolean.push(false);
                 let index = dynamics.boolean.len() - 1;
-                operations.push((index, Operation::MatchesStringRegex { left, right }));
+                operations.push((index, Instruction::MatchesStringRegex { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -226,7 +226,7 @@ fn compile_string<T, H: Hash>(
     variables: &HashMap<String, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
-    operations: &mut Vec<(usize, Operation<H>)>,
+    operations: &mut Vec<(usize, Instruction<H>)>,
 ) -> Pointer {
     match node {
         NodeString::Constant(value) => {
@@ -246,7 +246,7 @@ fn compile_string<T, H: Hash>(
                 let right = compile_string(right, variables, constants, dynamics, operations);
                 dynamics.string.push("".to_string());
                 let index = dynamics.string.len() - 1;
-                operations.push((index, Operation::AddStringString { left, right }));
+                operations.push((index, Instruction::AddStringString { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -258,7 +258,7 @@ fn compile_int64<T, H: Hash>(
     variables: &HashMap<String, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
-    operations: &mut Vec<(usize, Operation<H>)>,
+    operations: &mut Vec<(usize, Instruction<H>)>,
 ) -> Pointer {
     match node {
         NodeInt64::Variable { name } => {
@@ -273,7 +273,7 @@ fn compile_int64<T, H: Hash>(
                 let child = compile_uint64(node, variables, constants, dynamics, operations);
                 dynamics.int64.push(0);
                 let index = dynamics.int64.len() - 1;
-                operations.push((index, Operation::NegativeUint64(child)));
+                operations.push((index, Instruction::NegativeUint64(child)));
                 Pointer::Dynamic(index)
             }
         },
@@ -305,7 +305,7 @@ fn compile_uint64<T, H: Hash>(
     variables: &HashMap<String, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
-    operations: &mut Vec<(usize, Operation<H>)>,
+    operations: &mut Vec<(usize, Instruction<H>)>,
 ) -> Pointer {
     match node {
         NodeUint64::Constant(value) => {
@@ -325,7 +325,7 @@ fn compile_uint64<T, H: Hash>(
                 let right = compile_uint64(right, variables, constants, dynamics, operations);
                 dynamics.uint64.push(0);
                 let index = dynamics.uint64.len() - 1;
-                operations.push((index, Operation::AddUint64Uint64 { left, right }));
+                operations.push((index, Instruction::AddUint64Uint64 { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -335,7 +335,7 @@ fn compile_uint64<T, H: Hash>(
                 let right = compile_uint64(right, variables, constants, dynamics, operations);
                 dynamics.uint64.push(0);
                 let index = dynamics.uint64.len() - 1;
-                operations.push((index, Operation::SubtractUint64Uint64 { left, right }));
+                operations.push((index, Instruction::SubtractUint64Uint64 { left, right }));
                 Pointer::Dynamic(index)
             }
         },
@@ -344,7 +344,7 @@ fn compile_uint64<T, H: Hash>(
 
 #[derive(Clone, Debug)]
 pub struct Engine<T, H: Hash> {
-    operations: Vec<(usize, Operation<H>)>,
+    operations: Vec<(usize, Instruction<H>)>,
     constants: Scratch,
     reference_dynamics: Scratch,
     variables: HashMap<String, (usize, Variable<T>)>,
@@ -420,66 +420,67 @@ impl<T, H: Hash> Engine<T, H> {
         }
 
         let mut matched = Vec::new();
-        for (index, operation) in &self.operations {
-            match operation {
-                Operation::AddUint64Uint64 { left, right } => {
-                    dynamics.uint64[*index] =
+        let mut instructions = self.operations.iter();
+        while let Some((output, instruction)) = instructions.next() {
+            match instruction {
+                Instruction::AddUint64Uint64 { left, right } => {
+                    dynamics.uint64[*output] =
                         self.resolve_uint64(&dynamics, left) + self.resolve_uint64(&dynamics, right)
                 }
-                Operation::SubtractUint64Uint64 { left, right } => {
-                    dynamics.uint64[*index] = self.resolve_uint64(&dynamics, left)
+                Instruction::SubtractUint64Uint64 { left, right } => {
+                    dynamics.uint64[*output] = self.resolve_uint64(&dynamics, left)
                         - self.resolve_uint64(&dynamics, right);
                 }
-                Operation::EqualsUint64Uint64 { left, right } => {
-                    dynamics.boolean[*index] = self.resolve_uint64(&dynamics, left)
+                Instruction::EqualsUint64Uint64 { left, right } => {
+                    dynamics.boolean[*output] = self.resolve_uint64(&dynamics, left)
                         == self.resolve_uint64(&dynamics, right)
                 }
-                Operation::EqualsInt64Int64 { left, right } => {
-                    dynamics.boolean[*index] =
+                Instruction::EqualsInt64Int64 { left, right } => {
+                    dynamics.boolean[*output] =
                         self.resolve_int64(&dynamics, left) == self.resolve_int64(&dynamics, right);
                 }
-                Operation::WithinIpCidr { left, right } => {
-                    dynamics.boolean[*index] = self
+                Instruction::WithinIpCidr { left, right } => {
+                    dynamics.boolean[*output] = self
                         .resolve_cidr(&dynamics, right)
                         .contains(self.resolve_ip(&dynamics, left));
                 }
-                Operation::MatchesStringRegex { left, right } => {
-                    dynamics.boolean[*index] = self
+                Instruction::MatchesStringRegex { left, right } => {
+                    dynamics.boolean[*output] = self
                         .resolve_regex(&dynamics, right)
                         .is_match(self.resolve_string(&dynamics, left));
                 }
-                Operation::AddStringString { left, right } => {
-                    dynamics.string[*index] = self.resolve_string(&dynamics, left).clone()
+                Instruction::AddStringString { left, right } => {
+                    dynamics.string[*output] = self.resolve_string(&dynamics, left).clone()
                         + self.resolve_string(&dynamics, right)
                 }
-                Operation::BothBoolBool { left, right } => {
-                    dynamics.boolean[*index] = *self.resolve_boolean(&dynamics, left)
+                Instruction::BothBoolBool { left, right } => {
+                    dynamics.boolean[*output] = *self.resolve_boolean(&dynamics, left)
                         && *self.resolve_boolean(&dynamics, right);
                 }
-                Operation::EitherBoolBool { left, right } => {
-                    dynamics.boolean[*index] = *self.resolve_boolean(&dynamics, left)
+                Instruction::EitherBoolBool { left, right } => {
+                    dynamics.boolean[*output] = *self.resolve_boolean(&dynamics, left)
                         || *self.resolve_boolean(&dynamics, right);
                 }
-                Operation::EqualsBoolBool { left, right } => {
-                    dynamics.boolean[*index] = self.resolve_boolean(&dynamics, left)
+                Instruction::EqualsBoolBool { left, right } => {
+                    dynamics.boolean[*output] = self.resolve_boolean(&dynamics, left)
                         == self.resolve_boolean(&dynamics, right);
                 }
-                Operation::EqualsStringString { left, right } => {
-                    dynamics.boolean[*index] = self.resolve_string(&dynamics, left)
+                Instruction::EqualsStringString { left, right } => {
+                    dynamics.boolean[*output] = self.resolve_string(&dynamics, left)
                         == self.resolve_string(&dynamics, right);
                 }
-                Operation::NegativeUint64(child) => {
+                Instruction::NegativeUint64(child) => {
                     // will happily overflow. perhaps we should emit warnings about this stuff at compiletime
-                    dynamics.int64[*index] = -(*self.resolve_uint64(&dynamics, child) as i64);
+                    dynamics.int64[*output] = -(*self.resolve_uint64(&dynamics, child) as i64);
                 }
-                Operation::NotBool(child) => {
-                    dynamics.boolean[*index] = !self.resolve_boolean(&dynamics, child);
+                Instruction::NotBool(child) => {
+                    dynamics.boolean[*output] = !self.resolve_boolean(&dynamics, child);
                 }
-                Operation::EqualsIpIP { left, right } => {
-                    dynamics.boolean[*index] =
+                Instruction::EqualsIpIP { left, right } => {
+                    dynamics.boolean[*output] =
                         self.resolve_ip(&dynamics, left) == self.resolve_ip(&dynamics, right);
                 }
-                Operation::RaiseOutput { boolean, id } => {
+                Instruction::RaiseOutput { boolean, id } => {
                     if *self.resolve_boolean(&dynamics, boolean) {
                         matched.push(id);
                     }
@@ -541,7 +542,7 @@ where
         );
         operations.push((
             0,
-            Operation::RaiseOutput {
+            Instruction::RaiseOutput {
                 boolean: Pointer::Dynamic(dynamics.boolean.len() - 1),
                 id,
             },
