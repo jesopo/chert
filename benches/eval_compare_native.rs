@@ -1,8 +1,7 @@
+use chert::Variables;
 use cidr::{IpCidr, Ipv4Cidr};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::net::{IpAddr, Ipv4Addr};
-
-use chert_derive::Variables;
 
 fn criterion_1(c: &mut Criterion) {
     let mut group = c.benchmark_group("$i + 1 == 3");

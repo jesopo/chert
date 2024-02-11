@@ -1,6 +1,5 @@
+use chert::Variables;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-
-use chert_derive::Variables;
 
 #[derive(Clone, Variables, Debug)]
 struct Variables {
