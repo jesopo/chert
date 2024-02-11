@@ -51,6 +51,10 @@ pub enum Pointer {
 
 #[derive(Clone, Debug)]
 pub enum Instruction<H: Hash> {
+    Nothing,
+    SkipIfTrue { check: Pointer, forward: usize },
+    SkipIfFalse { check: Pointer, forward: usize },
+    RaiseOutput { boolean: Pointer, id: H },
     AddStringString { left: Pointer, right: Pointer },
     AddUint64Uint64 { left: Pointer, right: Pointer },
     BothBoolBool { left: Pointer, right: Pointer },
@@ -65,7 +69,6 @@ pub enum Instruction<H: Hash> {
     SubtractUint64Uint64 { left: Pointer, right: Pointer },
     WithinIpCidr { left: Pointer, right: Pointer },
     MatchesStringRegex { left: Pointer, right: Pointer },
-    RaiseOutput { boolean: Pointer, id: H },
 }
 
 fn compile_ip<T>(
@@ -139,21 +142,39 @@ fn compile_boolean<T, H: Hash>(
         NodeBoolean::Both(node) => match node {
             NodeBooleanBoth::BooleanBoolean { left, right } => {
                 let left = compile_boolean(left, variables, constants, dynamics, operations);
+                let jump_insert = operations.len();
+                operations.push((0, Instruction::Nothing));
                 let right = compile_boolean(right, variables, constants, dynamics, operations);
+                let output = dynamics.boolean.len();
                 dynamics.boolean.push(false);
-                let index = dynamics.boolean.len() - 1;
-                operations.push((index, Instruction::BothBoolBool { left, right }));
-                Pointer::Dynamic(index)
+                operations[jump_insert] = (
+                    output,
+                    Instruction::SkipIfFalse {
+                        check: left.clone(),
+                        forward: operations.len() - jump_insert,
+                    },
+                );
+                operations.push((output, Instruction::BothBoolBool { left, right }));
+                Pointer::Dynamic(output)
             }
         },
         NodeBoolean::Either(node) => match node {
             NodeBooleanEither::BooleanBoolean { left, right } => {
                 let left = compile_boolean(left, variables, constants, dynamics, operations);
+                let jump_insert = operations.len();
+                operations.push((0, Instruction::Nothing));
                 let right = compile_boolean(right, variables, constants, dynamics, operations);
+                let output = dynamics.boolean.len();
                 dynamics.boolean.push(false);
-                let index = dynamics.boolean.len() - 1;
-                operations.push((index, Instruction::EitherBoolBool { left, right }));
-                Pointer::Dynamic(index)
+                operations[jump_insert] = (
+                    output,
+                    Instruction::SkipIfTrue {
+                        check: left.clone(),
+                        forward: operations.len() - jump_insert,
+                    },
+                );
+                operations.push((output, Instruction::EitherBoolBool { left, right }));
+                Pointer::Dynamic(output)
             }
         },
         NodeBoolean::Within(node) => match node {
@@ -423,6 +444,30 @@ impl<T, H: Hash> Engine<T, H> {
         let mut instructions = self.operations.iter();
         while let Some((output, instruction)) = instructions.next() {
             match instruction {
+                Instruction::Nothing => {}
+                Instruction::SkipIfTrue { check, forward } => {
+                    let check = *self.resolve_boolean(&dynamics, check);
+                    dynamics.boolean[*output] = check;
+                    if check {
+                        for _ in 0..*forward {
+                            instructions.next();
+                        }
+                    }
+                }
+                Instruction::SkipIfFalse { check, forward } => {
+                    let check = *self.resolve_boolean(&dynamics, check);
+                    dynamics.boolean[*output] = check;
+                    if !check {
+                        for _ in 0..*forward {
+                            instructions.next();
+                        }
+                    }
+                }
+                Instruction::RaiseOutput { boolean, id } => {
+                    if *self.resolve_boolean(&dynamics, boolean) {
+                        matched.push(id);
+                    }
+                }
                 Instruction::AddUint64Uint64 { left, right } => {
                     dynamics.uint64[*output] =
                         self.resolve_uint64(&dynamics, left) + self.resolve_uint64(&dynamics, right)
@@ -479,11 +524,6 @@ impl<T, H: Hash> Engine<T, H> {
                 Instruction::EqualsIpIP { left, right } => {
                     dynamics.boolean[*output] =
                         self.resolve_ip(&dynamics, left) == self.resolve_ip(&dynamics, right);
-                }
-                Instruction::RaiseOutput { boolean, id } => {
-                    if *self.resolve_boolean(&dynamics, boolean) {
-                        matched.push(id);
-                    }
                 }
             };
         }

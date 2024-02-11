@@ -24,9 +24,11 @@ serde_json = "1.0"
 [[bench]]
 name = "eval_compare_native"
 harness = false
-
 [[bench]]
 name = "eval_flamegraphable"
+harness = false
+[[bench]]
+name = "eval_operator_skip"
 harness = false
 
 [profile.bench]

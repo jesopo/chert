@@ -188,3 +188,25 @@ fn test_all_types() {
         unreachable!();
     }
 }
+
+#[test]
+fn test_skip_either() {
+    // here we're checking that a previous expression succeeding
+    // doesn't cause an expression that should fail to succeed
+    #[derive(chert::Variables, Debug)]
+    struct Variables {
+        a: String,
+        b: String,
+    }
+    let engine = chert::compile(Vec::from([
+        (0, chert::parse("a == 'a' and b == 'b'").unwrap()),
+        (1, chert::parse("a == 'b' and b == 'b'").unwrap()),
+    ]));
+    assert_eq!(
+        engine.eval(&Variables {
+            a: String::from("a"),
+            b: String::from("b")
+        }),
+        &[&0]
+    );
+}
