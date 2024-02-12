@@ -18,7 +18,7 @@ fn main() {
 
     if let Ok(ast) = chert::parse(&args.expression) {
         println!("{ast:?}");
-        let engine = chert::compile::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile::compile(Vec::from([(0, ast)])).unwrap();
         let results = engine.eval(&Variables { _a: 0 });
         println!("{results:?}");
     } else {

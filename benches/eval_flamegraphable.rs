@@ -11,7 +11,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     for i in 0..1000 {
         expressions.push((i, chert::parse(&format!("a + 1 == {i}")).unwrap()));
     }
-    let engine = chert::compile(expressions);
+    let engine = chert::compile(expressions).unwrap();
     let variables = Variables { a: 2 };
 
     c.bench_function("bench", |b| b.iter(|| engine.eval(black_box(&variables))));

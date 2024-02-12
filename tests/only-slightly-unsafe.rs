@@ -9,7 +9,8 @@ fn test_serialize() {
     let ast = serde_json::to_string_pretty(&ast.get_root()).unwrap();
 
     let ast: chert::NodeBoolean = serde_json::from_str(&ast).unwrap();
-    let engine = unsafe { chert::compile_unsafe::<Variables, _, _, _>(Vec::from([(0, ast)])) };
+    let engine =
+        unsafe { chert::compile_unsafe::<Variables, _, _, _>(Vec::from([(0, ast)])) }.unwrap();
     engine.eval(&Variables { a: 1 });
 }
 
@@ -24,6 +25,6 @@ fn test_serialize_with_id() {
     let ast = serde_json::to_string_pretty(&Vec::from([(0, ast.get_root())])).unwrap();
 
     let asts: Vec<(i32, chert::NodeBoolean)> = serde_json::from_str(&ast).unwrap();
-    let engine = unsafe { chert::compile_unsafe::<Variables, _, _, _>(asts) };
+    let engine = unsafe { chert::compile_unsafe::<Variables, _, _, _>(asts) }.unwrap();
     engine.eval(&Variables { a: 1 });
 }

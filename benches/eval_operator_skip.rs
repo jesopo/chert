@@ -15,7 +15,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             chert::parse(&format!("nick == 'meow' and host == 'meow'")).unwrap(),
         ));
     }
-    let engine = chert::compile(expressions);
+    let engine = chert::compile(expressions).unwrap();
 
     let variables = Variables {
         nick: String::from("meow"),

@@ -17,7 +17,7 @@ fn test_boolean() {
         a: bool,
     }
     if let Ok(ast) = chert::parse("a && true") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(engine.eval(&Variables { a: true }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: false }), &[&0; 0]);
     } else {
@@ -32,7 +32,7 @@ fn test_cidr() {
         a: cidr::IpCidr,
     }
     if let Ok(ast) = chert::parse("1.1.1.1 in a") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(
             engine.eval(&Variables {
                 a: cidr("1.1.1.0/24")
@@ -57,7 +57,7 @@ fn test_int64() {
         a: i64,
     }
     if let Ok(ast) = chert::parse("a == -1") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(engine.eval(&Variables { a: -1 }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: -2 }), &[&0; 0]);
     } else {
@@ -72,7 +72,7 @@ fn test_ip() {
         a: std::net::IpAddr,
     }
     if let Ok(ast) = chert::parse("a == 1.1.1.1") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(engine.eval(&Variables { a: ip("1.1.1.1") }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: ip("1.1.1.2") }), &[&0; 0]);
     } else {
@@ -87,7 +87,7 @@ fn test_string() {
         a: String,
     }
     if let Ok(ast) = chert::parse("a == 'foo'") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(
             engine.eval(&Variables {
                 a: String::from("foo")
@@ -112,7 +112,7 @@ fn test_uint64() {
         a: u64,
     }
     if let Ok(ast) = chert::parse("a == 1") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(engine.eval(&Variables { a: 1 }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: 2 }), &[&0; 0]);
     } else {
@@ -127,7 +127,7 @@ fn test_regex() {
         a: regex::Regex,
     }
     if let Ok(ast) = chert::parse("'foo' ~ a") {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(engine.eval(&Variables { a: re("f..") }), &[&0]);
         assert_eq!(engine.eval(&Variables { a: re("b..") }), &[&0; 0]);
     } else {
@@ -159,7 +159,7 @@ fn test_all_types() {
         ])
         .join(" and "),
     ) {
-        let engine = chert::compile(Vec::from([(0, ast)]));
+        let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
         assert_eq!(
             engine.eval(&Variables {
                 a: true,
@@ -201,7 +201,8 @@ fn test_skip_either() {
     let engine = chert::compile(Vec::from([
         (0, chert::parse("a == 'a' and b == 'b'").unwrap()),
         (1, chert::parse("a == 'b' and b == 'b'").unwrap()),
-    ]));
+    ]))
+    .unwrap();
     assert_eq!(
         engine.eval(&Variables {
             a: String::from("a"),

@@ -11,7 +11,7 @@ fn criterion_1(c: &mut Criterion) {
     }
 
     let ast = chert::parse("i + 1 == 3").unwrap();
-    let engine = chert::compile(Vec::from([(0, ast)]));
+    let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
     let variables = Variables { i: 2 };
 
     group.bench_function("chert", |b| b.iter(|| engine.eval(&variables)));
@@ -28,7 +28,7 @@ fn criterion_2(c: &mut Criterion) {
     }
 
     let ast = chert::parse("ip in 1.1.1.0/24").unwrap();
-    let engine = chert::compile(Vec::from([(0, ast)]));
+    let engine = chert::compile(Vec::from([(0, ast)])).unwrap();
     let variables = Variables {
         ip: IpAddr::V4(Ipv4Addr::from(16843009)),
     };
