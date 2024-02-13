@@ -110,9 +110,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
         impl chert::variables::Variables for #struct_name {
             fn variables() -> std::collections::HashMap<&'static str, chert::variables::Variable<Self>> {
-                use std::collections::HashMap;
-                use chert::variables::Variable;
-                HashMap::from([#(#fields),*])
+                std::collections::HashMap::from([#(#fields),*])
             }
         }
     }
