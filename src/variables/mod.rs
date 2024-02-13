@@ -47,21 +47,7 @@ impl VariableType for String {
 }
 
 pub trait Variables: Sized + std::fmt::Debug {
-    fn variables() -> HashMap<String, (usize, Variable<Self>)>;
-}
-
-impl<T> Variable<T> {
-    pub fn type_key(&self) -> u8 {
-        match self {
-            Self::Boolean(_) => 0,
-            Self::Cidr(_) => 1,
-            Self::Int64(_) => 2,
-            Self::Ip(_) => 3,
-            Self::String(_) => 4,
-            Self::Uint64(_) => 5,
-            Self::Regex(_) => 6,
-        }
-    }
+    fn variables() -> HashMap<&'static str, Variable<Self>>;
 }
 
 impl<T> std::fmt::Debug for Variable<T> {

@@ -109,25 +109,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         }
 
         impl chert::variables::Variables for #struct_name {
-            fn variables() -> std::collections::HashMap<String, (usize, chert::variables::Variable<Self>)> {
+            fn variables() -> std::collections::HashMap<&'static str, chert::variables::Variable<Self>> {
                 use std::collections::HashMap;
                 use chert::variables::Variable;
-
-                let mut field_counts: HashMap<u8, usize> = HashMap::new();
-                let mut indexed_fields: HashMap<String, (usize, Variable<Self>)> = HashMap::new();
-                let unindexed_fields: HashMap<&'static str, Variable<Self>> = HashMap::from([#(#fields),*]);
-
-                for (name, field) in unindexed_fields.into_iter() {
-                    let type_key = field.type_key();
-                    if let Some(i) = field_counts.get(&type_key) {
-                        field_counts.insert(type_key, i + 1);
-                    } else {
-                        field_counts.insert(type_key, 0);
-                    }
-                    indexed_fields.insert(name.to_owned(), (field_counts[&type_key], field));
-                }
-
-                indexed_fields
+                HashMap::from([#(#fields),*])
             }
         }
     }

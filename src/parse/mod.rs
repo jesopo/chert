@@ -133,7 +133,7 @@ fn parse_inner<T: Variables>(tokens: Vec<(Token, Range<usize>)>) -> Result<Node,
                             None
                         }
                     }
-                } else if let Some((_index, field)) = fields.get(&name) {
+                } else if let Some(field) = fields.get(name.as_str()) {
                     Some(match field {
                         Variable::Boolean(_) => Node::Boolean(NodeBoolean::Variable { name }),
                         Variable::Cidr(_) => Node::Cidr(NodeCidr::Variable { name }),

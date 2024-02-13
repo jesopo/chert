@@ -84,7 +84,7 @@ pub enum Error {
 
 fn compile_ip<T>(
     node: &NodeIp,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
 ) -> Result<Pointer, Error> {
     Ok(match node {
@@ -92,7 +92,7 @@ fn compile_ip<T>(
             constants.ip.push(*value);
             Pointer::Constant(constants.ip.len() - 1)
         }
-        NodeIp::Variable { name } => match variables.get(name) {
+        NodeIp::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Ip(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -107,7 +107,7 @@ fn compile_ip<T>(
 
 fn compile_cidr<T>(
     node: &NodeCidr,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
 ) -> Result<Pointer, Error> {
     Ok(match node {
@@ -115,7 +115,7 @@ fn compile_cidr<T>(
             constants.cidr.push(*value);
             Pointer::Constant(constants.cidr.len() - 1)
         }
-        NodeCidr::Variable { name } => match variables.get(name) {
+        NodeCidr::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Cidr(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -130,7 +130,7 @@ fn compile_cidr<T>(
 
 fn compile_boolean<T, H: Hash>(
     node: &NodeBoolean,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Instruction<H>)>,
@@ -140,7 +140,7 @@ fn compile_boolean<T, H: Hash>(
             constants.boolean.push(*value);
             Pointer::Constant(constants.boolean.len() - 1)
         }
-        NodeBoolean::Variable { name } => match variables.get(name) {
+        NodeBoolean::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Boolean(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -264,7 +264,7 @@ fn compile_boolean<T, H: Hash>(
 
 fn compile_string<T, H: Hash>(
     node: &NodeString,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Instruction<H>)>,
@@ -274,7 +274,7 @@ fn compile_string<T, H: Hash>(
             constants.string.push(value.clone());
             Pointer::Constant(constants.string.len() - 1)
         }
-        NodeString::Variable { name } => match variables.get(name) {
+        NodeString::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::String(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -299,13 +299,13 @@ fn compile_string<T, H: Hash>(
 
 fn compile_int64<T, H: Hash>(
     node: &NodeInt64,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Instruction<H>)>,
 ) -> Result<Pointer, Error> {
     Ok(match node {
-        NodeInt64::Variable { name } => match variables.get(name) {
+        NodeInt64::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Int64(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -329,11 +329,11 @@ fn compile_int64<T, H: Hash>(
 
 fn compile_regex<T>(
     node: &NodeRegex,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
 ) -> Result<Pointer, Error> {
     Ok(match node {
-        NodeRegex::Variable { name } => match variables.get(name) {
+        NodeRegex::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Regex(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -352,7 +352,7 @@ fn compile_regex<T>(
 
 fn compile_uint64<T, H: Hash>(
     node: &NodeUint64,
-    variables: &HashMap<String, (usize, Variable<T>)>,
+    variables: &HashMap<&'static str, (usize, Variable<T>)>,
     constants: &mut Scratch,
     dynamics: &mut Scratch,
     operations: &mut Vec<(usize, Instruction<H>)>,
@@ -362,7 +362,7 @@ fn compile_uint64<T, H: Hash>(
             constants.uint64.push(*value);
             Pointer::Constant(constants.uint64.len() - 1)
         }
-        NodeUint64::Variable { name } => match variables.get(name) {
+        NodeUint64::Variable { name } => match variables.get(name.as_str()) {
             None => return Err(Error::VariableNotFound { name: name.clone() }),
             Some((index, Variable::Uint64(_))) => Pointer::Dynamic(*index),
             _ => {
@@ -400,7 +400,7 @@ pub struct Engine<T, H: Hash> {
     operations: Vec<(usize, Instruction<H>)>,
     constants: Scratch,
     reference_dynamics: Scratch,
-    variables: HashMap<String, (usize, Variable<T>)>,
+    variables: HashMap<&'static str, (usize, Variable<T>)>,
 }
 
 impl<T, H: Hash> Engine<T, H> {
@@ -581,22 +581,48 @@ where
     N: Borrow<NodeBoolean>,
     I: IntoIterator<Item = (H, N)>,
 {
-    let variables = T::variables();
     let mut constants = Scratch::new();
     let mut initial_dynamics = Scratch::new();
 
-    for (_, (_, field)) in variables.iter() {
-        match field {
-            Variable::Boolean(_) => initial_dynamics.boolean.push(false),
-            Variable::Cidr(_) => initial_dynamics
-                .cidr
-                .push(IpCidr::V4(Ipv4Cidr::new_host(Ipv4Addr::from(0)))),
-            Variable::Int64(_) => initial_dynamics.int64.push(0),
-            Variable::Ip(_) => initial_dynamics.ip.push(IpAddr::V4(Ipv4Addr::from(0))),
-            Variable::String(_) => initial_dynamics.string.push("".to_string()),
-            Variable::Uint64(_) => initial_dynamics.uint64.push(0),
-            Variable::Regex(_) => initial_dynamics.regex.push(Regex::new("").unwrap()),
+    let mut variables_unindexed = T::variables().into_iter().collect::<Vec<_>>();
+    variables_unindexed.sort_by_key(|(k, _)| *k);
+    let mut variables = HashMap::new();
+
+    let placeholder_ip = IpAddr::V4(Ipv4Addr::from(0));
+    let placeholder_cidr = IpCidr::V4(Ipv4Cidr::new_host(Ipv4Addr::from(0)));
+
+    for (name, field) in variables_unindexed {
+        let index = match field {
+            Variable::Boolean(_) => {
+                initial_dynamics.boolean.push(false);
+                initial_dynamics.boolean.len() - 1
+            }
+            Variable::Cidr(_) => {
+                initial_dynamics.cidr.push(placeholder_cidr);
+                initial_dynamics.cidr.len() - 1
+            }
+            Variable::Int64(_) => {
+                initial_dynamics.int64.push(0);
+                initial_dynamics.int64.len() - 1
+            }
+            Variable::Ip(_) => {
+                initial_dynamics.ip.push(placeholder_ip);
+                initial_dynamics.ip.len() - 1
+            }
+            Variable::String(_) => {
+                initial_dynamics.string.push(String::new());
+                initial_dynamics.string.len() - 1
+            }
+            Variable::Uint64(_) => {
+                initial_dynamics.uint64.push(0);
+                initial_dynamics.uint64.len() - 1
+            }
+            Variable::Regex(_) => {
+                initial_dynamics.regex.push(Regex::new("").unwrap());
+                initial_dynamics.regex.len() - 1
+            }
         };
+        variables.insert(name, (index, field));
     }
 
     let mut max_size_dynamics = initial_dynamics.clone();
